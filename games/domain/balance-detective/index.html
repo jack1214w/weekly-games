@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>天平偵探：水果有多重？</title>
+<style>
+:root{
+  --bg:#fdf7ec;--card:#fff;--ink:#3b2f24;--sub:#7a6a58;--line:#e6d8c3;
+  --accent:#e0703a;--accent2:#2f8f6f;--beam:#8a5a33;--pan:#f1e3cc;--warn:#c0392b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:17px;line-height:1.5;touch-action:manipulation;-webkit-user-select:none;user-select:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font:inherit;color:inherit;border:none;cursor:pointer;touch-action:manipulation}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+.top a{color:var(--accent2);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center;padding:0 4px}
+.top .info{font-weight:700;color:var(--sub);font-size:16px;text-align:center;flex:1}
+.iconbtn{min-width:44px;min-height:44px;border-radius:12px;background:var(--card);border:2px solid var(--line);font-size:20px}
+.wrap{max-width:960px;margin:0 auto;padding:12px 12px 28px}
+.screen{display:none}
+.screen.on{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:clamp(14px,3vw,24px);margin-bottom:14px}
+h1{font-size:clamp(26px,6vw,38px);line-height:1.25;margin-bottom:6px}
+h2{font-size:clamp(20px,4.5vw,26px);margin-bottom:6px}
+.goal{color:var(--sub);margin-bottom:12px}
+.how{list-style:none;display:grid;gap:10px;margin:12px 0 18px}
+.how li{display:flex;gap:10px;align-items:flex-start}
+.how li span:first-child{font-size:26px;line-height:1.2;flex:0 0 34px;text-align:center}
+.big{display:block;width:100%;min-height:56px;border-radius:16px;background:var(--accent);color:#fff;font-size:20px;font-weight:800;box-shadow:0 4px 0 #b3532a}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #b3532a}
+.big.alt{background:var(--accent2);box-shadow:0 4px 0 #1f6a51}
+.ghost{background:transparent;color:var(--accent2);font-weight:700;min-height:44px;margin-top:10px;width:100%}
+.lvmap{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.lvdot{flex:1 1 52px;min-height:48px;border-radius:12px;background:#f6eddd;border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;color:var(--sub)}
+.lvdot b{font-size:15px;color:var(--ink)}
+.lvdot.done{background:#e3f4ec;border-color:#9fd3bc}
+/* game */
+.legend{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.legend span{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:700}
+.story{text-align:center;color:var(--sub);margin-bottom:8px}
+.sect{font-weight:800;color:var(--sub);font-size:16px;margin:6px 2px}
+.clues{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;margin-bottom:12px}
+.scale{position:relative;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:8px 8px 10px}
+.scale .lbl{position:absolute;top:6px;left:10px;font-size:14px;color:var(--sub);font-weight:700}
+.rig{position:relative;height:var(--h,130px);margin-top:14px}
+.post{position:absolute;left:50%;bottom:0;width:10px;margin-left:-5px;top:22px;background:var(--beam);border-radius:4px}
+.base{position:absolute;left:50%;bottom:0;width:90px;margin-left:-45px;height:10px;background:var(--beam);border-radius:6px}
+.beam{position:absolute;left:8%;right:8%;top:18px;height:8px;background:var(--beam);border-radius:4px;transition:transform .7s cubic-bezier(.3,1.6,.5,1);transform-origin:50% 50%}
+.pivot{position:absolute;left:50%;top:12px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:#5c3b20;z-index:2}
+.pan{position:absolute;top:26px;width:40%;transition:transform .7s cubic-bezier(.3,1.6,.5,1)}
+.pan.l{left:2%}.pan.r{right:2%}
+.pan .str{height:16px;border-left:2px solid #b08a63;border-right:2px solid #b08a63;margin:0 14%}
+.pan .dish{min-height:calc(var(--h,130px) - 62px);background:var(--pan);border:2px solid #dcc6a3;border-radius:0 0 40px 40px;display:flex;flex-wrap:wrap-reverse;align-content:flex-start;justify-content:center;align-items:flex-end;gap:2px;padding:4px}
+.it{font-size:clamp(24px,6vw,30px);line-height:1}
+.blk{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:30px;padding:0 5px;border-radius:7px;background:#6b7a8f;color:#fff;font-weight:800;font-size:16px;border-bottom:3px solid #485466}
+.blk.k10{background:#4f5d75}.blk.k5{background:#7b6d8d}.blk.k2{background:#5f8b7d}.blk.k1{background:#9a8c73}
+.blk.big2{min-width:46px}
+.clues .rig{--h:112px}
+.main .rig{--h:170px}
+.main{border-color:#f0c9a8;border-width:3px}
+.main .dish.r .blk{cursor:pointer}
+.status{text-align:center;font-weight:800;min-height:28px;margin:6px 0}
+.status.good{color:var(--accent2)}.status.bad{color:var(--warn)}
+.tray{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.tray button{min-width:64px;min-height:56px;border-radius:14px;color:#fff;font-weight:800;font-size:19px;border-bottom:4px solid rgba(0,0,0,.25)}
+.tray button:active{transform:translateY(2px)}
+.tray button small{display:block;font-size:13px;font-weight:600;opacity:.9}
+.acts{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
+.acts button{min-height:52px;border-radius:14px;font-weight:800;background:#f6eddd;border:2px solid var(--line)}
+.acts .go{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rtotal{text-align:center;color:var(--sub);font-size:16px}
+.hint{display:none;background:#fff8d9;border:2px dashed #e7c64a;border-radius:14px;padding:10px 12px;margin:10px 0}
+.hint.on{display:block}
+.overlay{position:fixed;inset:0;background:rgba(40,30,20,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.overlay.on{display:flex}
+.overlay .card{max-width:520px;width:100%;max-height:90vh;overflow:auto;animation:pop .35s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.stars{font-size:38px;text-align:center;letter-spacing:4px;margin:6px 0}
+.why{background:#f3fbf7;border-radius:12px;padding:10px 12px;margin:10px 0 14px}
+.res-list{list-style:none;display:grid;gap:6px;margin:10px 0 16px}
+.res-list li{display:flex;justify-content:space-between;background:#f6eddd;border-radius:10px;padding:8px 12px}
+@media (orientation:landscape) and (min-width:820px){
+  .game-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start}
+  .clues{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="../../../">← 遊戲目錄</a>
+  <div class="info" id="topInfo">⚖️ 天平偵探</div>
+  <button class="iconbtn" id="muteBtn" aria-label="音效開關">🔇</button>
+</div>
+
+<div class="wrap">
+  <!-- 開始畫面 -->
+  <section class="screen on" id="scrStart">
+    <div class="card">
+      <h1>⚖️ 天平偵探<br>水果有多重？</h1>
+      <p class="goal">讀懂已經平衡的天平線索，推理出每種水果的重量，再放上砝碼讓「挑戰天平」平衡！</p>
+      <ul class="how">
+        <li><span>🔍</span><span>上面的「線索天平」都已經平衡，左右一樣重。</span></li>
+        <li><span>🧠</span><span>用線索推理：🍎、🍌、🍇 各是幾克？</span></li>
+        <li><span>🧱</span><span>點砝碼放到挑戰天平的右盤；點盤子上的砝碼可以拿下來。</span></li>
+        <li><span>⚖️</span><span>按「秤秤看」。一次就平衡得 ⭐⭐⭐，越少次越好！</span></li>
+        <li><span>💡</span><span>卡住可以看提示，但會少一顆星。</span></li>
+      </ul>
+      <div class="sect">關卡進度（每次開新局，水果重量都會重新隨機）</div>
+      <div class="lvmap" id="lvMap"></div>
+      <button class="big" id="startBtn">開始推理</button>
+      <button class="ghost" id="resetBtn">從第 1 關重新開始</button>
+    </div>
+  </section>
+
+  <!-- 遊戲畫面 -->
+  <section class="screen" id="scrGame">
+    <div class="legend" id="legend"></div>
+    <p class="story" id="story"></p>
+    <div class="game-grid">
+      <div>
+        <div class="sect">🔍 線索天平（已平衡）</div>
+        <div class="clues" id="clues"></div>
+      </div>
+      <div>
+        <div class="sect">🎯 挑戰天平：右盤要放多少克？</div>
+        <div class="scale main" id="mainScale"></div>
+        <div class="rtotal" id="rTotal">右盤：0 克</div>
+        <div class="status" id="status"></div>
+        <div class="tray" id="tray"></div>
+        <div class="acts">
+          <button id="clearBtn">🧹 清空</button>
+          <button id="hintBtn">💡 提示</button>
+          <button class="go" id="checkBtn">⚖️ 秤秤看</button>
+        </div>
+        <div class="hint" id="hintBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 結束畫面 -->
+  <section class="screen" id="scrEnd">
+    <div class="card">
+      <h2>🏅 偵探結案報告</h2>
+      <div class="stars" id="endStars"></div>
+      <p id="endMsg" style="text-align:center;font-weight:700"></p>
+      <ul class="res-list" id="endList"></ul>
+      <div class="why"><b>🧠 偵探心法：等量公理</b><br>天平兩邊同時加上、拿走、或換成一樣重的東西，天平仍然平衡。把「看不見的重量」換成「看得見的砝碼」，就是代數思考的開始！</div>
+      <button class="big" id="againBtn">再玩一次</button>
+      <button class="ghost" id="homeBtn">回到開始畫面</button>
+    </div>
+  </section>
+</div>
+
+<!-- 過關視窗 -->
+<div class="overlay" id="winBox">
+  <div class="card">
+    <h2 id="winTitle">平衡了！</h2>
+    <div class="stars" id="winStars"></div>
+    <div class="why" id="winWhy"></div>
+    <button class="big alt" id="nextBtn">下一關 →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var KEY='wg-balance-detective-';
+function load(k,d){try{var v=localStorage.getItem(KEY+k);return v===null?d:JSON.parse(v);}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v));}catch(e){}}
+function $(id){return document.getElementById(id);}
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+var F={a:'🍎',b:'🍌',c:'🍇'};
+var NAME={a:'蘋果',b:'香蕉',c:'葡萄'};
+
+/* ---------- 音效（預設靜音） ---------- */
+var muted=load('muted',true),ac=null;
+function tone(f,d,t,delay){
+  if(muted)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    var o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(delay||0);
+    o.type=t||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(0.18,s+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,s+d);
+    o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d+0.05);
+  }catch(e){}
+}
+var sfx={
+  tap:function(){tone(660,0.08,'triangle');},
+  good:function(){tone(523,0.15);tone(659,0.15,'sine',0.12);tone(784,0.25,'sine',0.24);},
+  bad:function(){tone(220,0.25,'square');},
+  clunk:function(){tone(140,0.12,'triangle');}
+};
+function paintMute(){$('muteBtn').textContent=muted?'🔇':'🔊';}
+$('muteBtn').addEventListener('pointerup',function(){muted=!muted;save('muted',muted);paintMute();sfx.tap();});
+paintMute();
+
+/* ---------- 關卡產生器 ---------- */
+// 每個 side 是陣列：'a'/'b'/'c' 代表水果，數字代表已知砝碼
+function sumOf(side,v){var s=0;side.forEach(function(x){s+=typeof x==='number'?x:v[x];});return s;}
+function cnt(side,k){return side.filter(function(x){return x===k;}).length;}
+function fr(side){return side.map(function(x){return typeof x==='number'?x+'克':F[x];}).join(' + ');}
+
+var LEVELS=[
+  {title:'第 1 關：一種水果',story:'市場阿姨說：「兩顆蘋果剛好跟這個砝碼一樣重喔！」',
+   gen:function(){var a=ri(3,9);return {v:{a:a},clues:[[['a','a'],[2*a]]],q:['a']};},
+   hint:function(v){return '兩顆 🍎 是 '+(2*v.a)+' 克，那一顆是多少？試試把它平分成兩半。';},
+   why:function(v){return '🍎🍎 = '+(2*v.a)+' 克，所以 🍎 = '+(2*v.a)+' ÷ 2 = <b>'+v.a+' 克</b>。';}},
+  {title:'第 2 關：先找出一種',story:'兩座天平藏著兩種水果，先找出你最有把握的那一種！',
+   gen:function(){var a=ri(2,6),b;do{b=ri(4,9);}while(b===a);return {v:{a:a,b:b},clues:[[['a','a','a'],[3*a]],[['a','b'],[a+b]]],q:['b','b']};},
+   hint:function(v){return '先用第一座天平算出 🍎。再看第二座：🍎 + 🍌 = '+(v.a+v.b)+' 克，把 🍎 的重量拿走，剩下就是 🍌。';},
+   why:function(v){return '🍎 = '+(3*v.a)+' ÷ 3 = '+v.a+' 克；🍌 = '+(v.a+v.b)+' − '+v.a+' = '+v.b+' 克；所以 🍌🍌 = <b>'+(2*v.b)+' 克</b>。';}},
+  {title:'第 3 關：換一換',story:'奇怪，有一座天平上面根本沒有砝碼？那就把水果「換」成別的水果吧！',
+   gen:function(){var c=ri(2,5),a=3*c;return {v:{a:a,c:c},clues:[[['a'],['c','c','c']],[['a','c'],[4*c]]],q:['a','c','c']};},
+   hint:function(v){return '第一座說 1 顆 🍎 = 3 顆 🍇。把第二座的 🍎 換成 🍇🍇🍇，左邊就變成幾顆 🍇？';},
+   why:function(v){return '🍎 + 🍇 = 🍇🍇🍇🍇 = '+(4*v.c)+' 克，所以 🍇 = '+v.c+' 克、🍎 = '+v.a+' 克；🍎🍇🍇 = '+v.a+' + '+v.c+' + '+v.c+' = <b>'+(v.a+2*v.c)+' 克</b>。';}},
+  {title:'第 4 關：連鎖推理',story:'三種水果串成一條線索鏈，一環扣一環！',
+   gen:function(){var c=ri(2,4),b=2*c,a=b+c+ri(1,3);return {v:{a:a,b:b,c:c},clues:[[['b'],['c','c']],[['b','c'],[3*c]],[['a'],['b','c',a-b-c]]],q:['a','b']};},
+   hint:function(v){return '先把 🍌 換成 🍇🍇，算出 🍇；再算 🍌；最後看第三座天平找 🍎。';},
+   why:function(v){return '🍌 + 🍇 = 3 顆 🍇 = '+(3*v.c)+' 克 → 🍇 = '+v.c+'、🍌 = '+v.b+'；🍎 = '+v.b+' + '+v.c+' + '+(v.a-v.b-v.c)+' = '+v.a+'；🍎🍌 = <b>'+(v.a+v.b)+' 克</b>。';}},
+  {title:'第 5 關：偵探大挑戰',story:'三座天平，每座都有兩種水果……有沒有不用一個一個算的妙招？',
+   gen:function(){var p=[2,3,4,5,6,7,8,9].sort(function(){return Math.random()-0.5;});var a=p[0],b=p[1],c=p[2];
+     return {v:{a:a,b:b,c:c},clues:[[['a','b'],[a+b]],[['b','c'],[b+c]],[['a','c'],[a+c]]],q:['a','b','c']};},
+   hint:function(v){return '把三座天平「全部疊在一起」：左邊會有幾顆 🍎、幾根 🍌、幾串 🍇？右邊一共幾克？';},
+   why:function(v){var t=2*(v.a+v.b+v.c);return '三座天平加起來：🍎🍎🍌🍌🍇🍇 = '+t+' 克，每種剛好兩份，所以 🍎🍌🍇 = '+t+' ÷ 2 = <b>'+(t/2)+' 克</b>。（🍎='+v.a+'、🍌='+v.b+'、🍇='+v.c+'）';}}
+];
+
+/* ---------- 狀態 ---------- */
+var st=load('state',null);
+function newRun(){st={lv:0,res:[],cur:null};save('state',st);}
+if(!st||typeof st.lv!=='number'||!Array.isArray(st.res))newRun();
+var right=[],tries=0,hinted=false,locked=false;
+
+/* ---------- 畫天平 ---------- */
+function itemHTML(x){
+  if(typeof x==='number'){var c=x>=10?'k10':x>=5?'k5':x>=2?'k2':'k1';return '<span class="blk '+c+(x>=10?' big2':'')+'">'+x+'</span>';}
+  return '<span class="it">'+F[x]+'</span>';
+}
+function scaleHTML(label,L,R,rightTappable){
+  return (label?'<div class="lbl">'+label+'</div>':'')+
+   '<div class="rig"><div class="base"></div><div class="post"></div><div class="beam"></div><div class="pivot"></div>'+
+   '<div class="pan l"><div class="str"></div><div class="dish l">'+L.map(itemHTML).join('')+'</div></div>'+
+   '<div class="pan r"><div class="str"></div><div class="dish r">'+R.map(function(x,i){return rightTappable?itemHTML(x).replace('<span ','<span data-i="'+i+'" '):itemHTML(x);}).join('')+'</div></div></div>';
+}
+function tilt(el,diff){
+  // diff>0：左邊重
+  var ang=Math.max(-14,Math.min(14,diff*1.6));
+  if(diff!==0&&Math.abs(ang)<4)ang=diff>0?4:-4;
+  var beam=el.querySelector('.beam'),rig=el.querySelector('.rig');
+  var w=beam.getBoundingClientRect().width||rig.clientWidth*0.84;
+  var dy=Math.sin(ang*Math.PI/180)*w*0.38;
+  beam.style.transform='rotate('+(-ang)+'deg)';
+  el.querySelector('.pan.l').style.transform='translateY('+dy+'px)';
+  el.querySelector('.pan.r').style.transform='translateY('+(-dy)+'px)';
+}
+
+function lvMap(){
+  var h='';for(var i=0;i<LEVELS.length;i++){var r=st.res[i];
+    h+='<div class="lvdot'+(r?' done':'')+'"><b>第'+(i+1)+'關</b>'+(r?'⭐'.repeat(r):'—')+'</div>';}
+  $('lvMap').innerHTML=h;
+  $('startBtn').textContent=st.lv>=LEVELS.length?'看結案報告':(st.lv>0?'繼續第 '+(st.lv+1)+' 關':'開始推理');
+}
+
+function show(id){['scrStart','scrGame','scrEnd'].forEach(function(s){$(s).classList.toggle('on',s===id);});window.scrollTo(0,0);}
+
+function startLevel(){
+  if(st.lv>=LEVELS.length){showEnd();return;}
+  var Lv=LEVELS[st.lv];
+  if(!st.cur){st.cur=Lv.gen();save('state',st);}
+  right=[];tries=0;hinted=false;locked=false;
+  var c=st.cur,keys=Object.keys(c.v);
+  $('topInfo').textContent='⚖️ '+Lv.title;
+  $('legend').innerHTML=keys.map(function(k){return '<span>'+F[k]+' '+NAME[k]+' = ? 克</span>';}).join('');
+  $('story').textContent=Lv.story;
+  $('clues').innerHTML=c.clues.map(function(cl,i){return '<div class="scale">'+scaleHTML('線索 '+(i+1),cl[0],cl[1])+'</div>';}).join('');
+  $('hintBox').classList.remove('on');$('hintBox').innerHTML='';
+  $('status').textContent='';$('status').className='status';
+  drawMain(false);
+  show('scrGame');
+}
+function drawMain(doTilt){
+  var c=st.cur;
+  $('mainScale').innerHTML=scaleHTML('',c.q,right,true);
+  var t=right.reduce(function(s,x){return s+x;},0);
+  $('rTotal').textContent='右盤：'+t+' 克';
+  if(doTilt)requestAnimationFrame(function(){tilt($('mainScale'),sumOf(c.q,c.v)-t);});
+}
+
+var WTS=[{w:10,c:'#4f5d75'},{w:5,c:'#7b6d8d'},{w:2,c:'#5f8b7d'},{w:1,c:'#9a8c73'}];
+$('tray').innerHTML=WTS.map(function(o){return '<button data-w="'+o.w+'" style="background:'+o.c+'">'+o.w+'<small>克</small></button>';}).join('');
+$('tray').addEventListener('pointerup',function(e){
+  var b=e.target.closest('button');if(!b||locked)return;
+  var t=right.reduce(function(s,x){return s+x;},0),w=+b.dataset.w;
+  if(t+w>60){setStatus('盤子快放不下了！最多 60 克。','bad');return;}
+  right.push(w);right.sort(function(x,y){return y-x;});sfx.tap();setStatus('','');drawMain(false);
+});
+$('mainScale').addEventListener('pointerup',function(e){
+  var s=e.target.closest('[data-i]');if(!s||locked)return;
+  right.splice(+s.dataset.i,1);sfx.clunk();setStatus('','');drawMain(false);
+});
+$('clearBtn').addEventListener('pointerup',function(){if(locked)return;right=[];setStatus('','');drawMain(false);});
+$('hintBtn').addEventListener('pointerup',function(){
+  if(locked)return;hinted=true;
+  $('hintBox').innerHTML='💡 '+LEVELS[st.lv].hint(st.cur.v);$('hintBox').classList.add('on');sfx.tap();
+});
+function setStatus(t,c){var s=$('status');s.textContent=t;s.className='status'+(c?' '+c:'');}
+
+$('checkBtn').addEventListener('pointerup',function(){
+  if(locked)return;
+  if(!right.length){setStatus('先在右盤放上砝碼喔！','bad');return;}
+  tries++;
+  var c=st.cur,need=sumOf(c.q,c.v),t=right.reduce(function(s,x){return s+x;},0);
+  drawMain(true);
+  if(t===need){
+    locked=true;sfx.good();setStatus('✅ 完全平衡！','good');
+    var stars=tries===1?3:tries===2?2:1;if(hinted)stars=Math.max(1,stars-1);
+    st.res[st.lv]=stars;save('state',st);
+    setTimeout(function(){
+      $('winTitle').textContent=tries===1?'一次命中，神探！':'平衡了！破案！';
+      $('winStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+      $('winWhy').innerHTML='<b>推理過程</b><br>'+LEVELS[st.lv].why(c.v);
+      $('nextBtn').textContent=st.lv+1>=LEVELS.length?'看結案報告 →':'下一關 →';
+      $('winBox').classList.add('on');
+    },900);
+  }else{
+    sfx.bad();
+    setStatus(t<need?'⬇️ 左邊比較重：右盤還要再加一些。':'⬆️ 右邊比較重：右盤放太多了。','bad');
+  }
+});
+$('nextBtn').addEventListener('pointerup',function(){
+  $('winBox').classList.remove('on');st.lv++;st.cur=null;save('state',st);sfx.tap();startLevel();
+});
+
+function showEnd(){
+  var tot=0,h='';
+  for(var i=0;i<LEVELS.length;i++){var r=st.res[i]||0;tot+=r;h+='<li><span>'+LEVELS[i].title+'</span><span>'+'⭐'.repeat(r)+'</span></li>';}
+  var best=load('best',0);if(tot>best){best=tot;save('best',best);}
+  $('endStars').textContent='⭐ '+tot+' / '+(LEVELS.length*3);
+  $('endMsg').textContent=(tot>=14?'名偵探！你已經掌握「換一換、疊一疊」的推理心法。':tot>=10?'很棒的推理！再玩一次挑戰更少次數秤到平衡。':'完成所有案件了！下次試著先在心裡算好再秤。')+'（最佳紀錄：'+best+' 顆星）';
+  $('endList').innerHTML=h;
+  $('topInfo').textContent='⚖️ 天平偵探';
+  show('scrEnd');
+}
+
+$('startBtn').addEventListener('pointerup',function(){sfx.tap();startLevel();});
+$('resetBtn').addEventListener('pointerup',function(){newRun();lvMap();sfx.tap();});
+$('againBtn').addEventListener('pointerup',function(){newRun();sfx.tap();startLevel();});
+$('homeBtn').addEventListener('pointerup',function(){lvMap();$('topInfo').textContent='⚖️ 天平偵探';show('scrStart');});
+window.addEventListener('resize',function(){if($('scrGame').classList.contains('on')&&locked)drawMain(true);});
+lvMap();
+})();
+</script>
+</body>
+</html>

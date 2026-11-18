@@ -1,3 +1,25 @@
 {
-  "games": []
+  "games": [
+    {
+      "id": "balance-detective",
+      "title": "天平偵探：水果有多重？",
+      "emoji": "⚖️",
+      "category": "domain",
+      "sub": "數學",
+      "grade": "3–5 年級",
+      "minutes": 10,
+      "players": "單人",
+      "mechanic": "解謎",
+      "date": "2026-11-18",
+      "desc": "讀懂已平衡的天平線索，用「換一換、疊一疊」推理出蘋果、香蕉、葡萄的重量，再放砝碼讓挑戰天平平衡。從等量公理出發，練習代數前置的推理思考。",
+      "tags": [
+        "等量公理",
+        "代數思維",
+        "未知數",
+        "推理",
+        "天平"
+      ],
+      "path": "games/domain/balance-detective/"
+    }
+  ]
 }

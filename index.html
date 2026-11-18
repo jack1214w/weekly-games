@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>每週遊戲工坊｜四維資優</title>
+<style>
+:root{
+  --bg:#f6f3ec;--card:#fffdf8;--ink:#2a2622;--muted:#7a7166;--line:#e4ddcf;
+  --c-special:#b4562f;--c-domain:#2f6f8f;--c-drive:#4d7a3a;--accent:var(--c-special);
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 60px}
+header h1{font-size:clamp(24px,4vw,34px);margin:0 0 4px;letter-spacing:.02em}
+header p{margin:0;color:var(--muted);font-size:15px}
+/* 分類分頁 */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:22px 0 14px}
+.tab{border:1.5px solid var(--line);background:var(--card);border-radius:var(--r);padding:12px 10px;
+  text-align:left;cursor:pointer;font:inherit;color:inherit;min-height:64px;transition:.15s}
+.tab b{display:block;font-size:16px}
+.tab span{font-size:12.5px;color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tab[data-cat="special"]{--accent:var(--c-special)}
+.tab[data-cat="domain"]{--accent:var(--c-domain)}
+.tab[data-cat="drive"]{--accent:var(--c-drive)}
+.tab[data-cat="all"]{--accent:var(--ink)}
+@media(max-width:620px){.tabs{grid-template-columns:repeat(2,1fr)}}
+/* 篩選列 */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font:inherit;
+  font-size:14px;cursor:pointer;color:var(--ink);min-height:36px}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.search{flex:1 1 200px;min-width:160px;border:1px solid var(--line);border-radius:999px;padding:8px 16px;
+  font:inherit;font-size:15px;background:var(--card);min-height:38px}
+/* 卡片 */
+.month{margin:26px 0 10px;font-size:14px;color:var(--muted);font-weight:600;display:flex;gap:10px;align-items:center}
+.month::after{content:"";flex:1;border-top:1px dashed var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 16px 14px;text-decoration:none;color:inherit;position:relative;transition:.15s;border-top:5px solid var(--cc)}
+.card:hover,.card:focus-visible{transform:translateY(-2px);box-shadow:0 6px 18px rgba(60,40,20,.08)}
+.card .emoji{font-size:30px;line-height:1;margin-bottom:8px}
+.card h3{margin:0 0 6px;font-size:17px}
+.card p{margin:0 0 12px;font-size:14px;line-height:1.55;color:#4a433b;flex:1}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.meta span{background:#f1ece2;border-radius:6px;padding:3px 8px;color:#5a5248}
+.meta .cat{background:var(--cc);color:#fff}
+.new{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;color:var(--cc);letter-spacing:.05em}
+.empty{padding:40px 10px;text-align:center;color:var(--muted)}
+.more{display:block;margin:20px auto 0;padding:10px 26px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);font:inherit;cursor:pointer}
+footer{margin-top:50px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>每週遊戲工坊</h1>
+    <p>每週一、三、五各上架一款：特殊需求課程、領域學習、模擬駕駛。平板、電腦、手機都能玩。</p>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <div class="bar">
+    <div id="subs" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    <input class="search" id="q" type="search" placeholder="搜尋遊戲名稱、科目、年級…" aria-label="搜尋">
+  </div>
+  <main id="list"></main>
+  <button class="more" id="more" hidden>顯示更早的遊戲</button>
+
+  <footer>
+    遊戲由 AI 依教學需求自動開發，內容與角色皆為虛構。<br>
+    發現錯誤或有改版想法，歡迎告訴林老師。
+  </footer>
+</div>
+<script>
+const CATS={
+  all:{name:"全部",desc:"所有遊戲"},
+  special:{name:"特殊需求",desc:"研究・情意・創造力",subs:["研究","情意","創造力","思考"]},
+  domain:{name:"領域學習",desc:"國語・數學・自然・社會",subs:["國語","數學","自然","社會"]},
+  drive:{name:"模擬駕駛",desc:"火車・公車・飛機・船",subs:["鐵道","公路","航空","航海"]}
+};
+const COLOR={special:"var(--c-special)",domain:"var(--c-domain)",drive:"var(--c-drive)"};
+const PAGE=24;
+let games=[],state={cat:"all",sub:"",q:"",limit:PAGE};
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function readHash(){
+  const p=new URLSearchParams(location.hash.slice(1));
+  state.cat=CATS[p.get("c")]?p.get("c"):"all";
+  state.sub=p.get("s")||"";
+}
+function writeHash(){
+  const p=new URLSearchParams();
+  if(state.cat!=="all")p.set("c",state.cat);
+  if(state.sub)p.set("s",state.sub);
+  history.replaceState(null,"","#"+p.toString());
+}
+function renderTabs(){
+  $("#tabs").innerHTML=Object.entries(CATS).map(([k,v])=>{
+    const n=k==="all"?games.length:games.filter(g=>g.category===k).length;
+    return `<button class="tab" role="tab" data-cat="${k}" aria-selected="${state.cat===k}">
+      <b>${v.name}（${n}）</b><span>${v.desc}</span></button>`;
+  }).join("");
+  const subs=CATS[state.cat].subs||[];
+  $("#subs").innerHTML=subs.length?["", ...subs].map(s=>
+    `<button class="chip" data-sub="${s}" aria-pressed="${state.sub===s}">${s||"全部"}</button>`).join(""):"";
+}
+function match(g){
+  if(state.cat!=="all"&&g.category!==state.cat)return false;
+  if(state.sub&&g.sub!==state.sub)return false;
+  if(state.q){
+    const hay=[g.title,g.desc,g.sub,g.grade,(g.tags||[]).join(" "),CATS[g.category]?.name].join(" ").toLowerCase();
+    if(!state.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w)))return false;
+  }
+  return true;
+}
+function card(g,isNew){
+  const c=COLOR[g.category]||"#888";
+  return `<a class="card" href="${esc(g.path)}" style="--cc:${c}">
+    ${isNew?'<span class="new">NEW</span>':""}
+    <div class="emoji">${esc(g.emoji||"🎮")}</div>
+    <h3>${esc(g.title)}</h3>
+    <p>${esc(g.desc)}</p>
+    <div class="meta">
+      <span class="cat">${esc(g.sub||CATS[g.category]?.name)}</span>
+      ${g.grade?`<span>${esc(g.grade)}</span>`:""}
+      ${g.minutes?`<span>約 ${esc(g.minutes)} 分鐘</span>`:""}
+      ${g.players?`<span>${esc(g.players)}</span>`:""}
+      <span>${esc(g.date)}</span>
+    </div></a>`;
+}
+function renderList(){
+  const list=games.filter(match);
+  const shown=list.slice(0,state.limit);
+  const newest=games[0]?.date;
+  if(!list.length){
+    $("#list").innerHTML=`<div class="empty">${games.length?"沒有符合條件的遊戲，換個關鍵字試試。":"第一款遊戲即將上架，敬請期待！"}</div>`;
+    $("#more").hidden=true;return;
+  }
+  // 依月份分組，避免變成一長條清單
+  const groups={};
+  shown.forEach(g=>{const m=g.date.slice(0,7);(groups[m]=groups[m]||[]).push(g)});
+  $("#list").innerHTML=Object.entries(groups).map(([m,arr])=>{
+    const [y,mo]=m.split("-");
+    return `<div class="month">${y} 年 ${+mo} 月 · ${arr.length} 款</div>
+      <div class="grid">${arr.map(g=>card(g,g.date===newest)).join("")}</div>`;
+  }).join("");
+  $("#more").hidden=list.length<=state.limit;
+}
+function render(){renderTabs();renderList();writeHash()}
+
+$("#tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab");if(!b)return;
+  state.cat=b.dataset.cat;state.sub="";state.limit=PAGE;render();
+});
+$("#subs").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;
+  state.sub=b.dataset.sub;state.limit=PAGE;render();
+});
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim();state.limit=PAGE;renderList()});
+$("#more").addEventListener("click",()=>{state.limit+=PAGE;renderList()});
+
+readHash();
+fetch("games.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{
+  games=(d.games||[]).sort((a,b)=>b.date.localeCompare(a.date));
+  render();
+}).catch(()=>{$("#list").innerHTML='<div class="empty">目錄載入失敗，請重新整理。</div>'});
+</script>
+</body>
+</html>

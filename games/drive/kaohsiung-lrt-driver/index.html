@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>高雄輕軌：水岸駕駛員</title>
+<style>
+:root{--bg:#0f2230;--panel:#15303f;--panel2:#1e4155;--ink:#f3f7fa;--mut:#b4cad5;--acc:#35c98a;--warn:#ffc94a;--bad:#ff6b6b;--blue:#5ab8ff;--card:#18394b}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg)}
+body{color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:17px;line-height:1.45;touch-action:manipulation;-webkit-user-select:none;user-select:none;overflow:hidden}
+button{font:inherit;color:inherit;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media (orientation:landscape) and (min-width:640px){#app{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr) clamp(220px,27vw,300px)}}
+#view{position:relative;min-height:0;min-width:0;overflow:hidden}
+#cv{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:0;right:0;top:0;padding:6px;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.row{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.chip{background:rgba(8,22,32,.8);border-radius:10px;padding:3px 9px;font-size:16px;white-space:nowrap}
+.top a,.top button{pointer-events:auto}
+.top a{color:var(--ink);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center;padding:0 10px;background:rgba(8,22,32,.8);border-radius:10px}
+.top .ttl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:16px}
+.ib{min-width:44px;min-height:44px;border-radius:10px;background:rgba(8,22,32,.8);font-size:20px}
+#spd{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+#spd small{font-size:16px;font-weight:600;color:var(--mut)}
+#lim{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#111;border:4px solid #d22;font-weight:800;font-size:16px}
+.ebar{display:inline-block;width:70px;height:12px;border-radius:6px;background:#334;vertical-align:middle;overflow:hidden;margin-left:4px}
+.ebar i{display:block;height:100%;width:50%;background:var(--acc)}
+.over{background:rgba(160,20,20,.9)!important}
+#toast{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;max-width:92%;text-align:center;background:rgba(8,22,32,.9);border:2px solid var(--blue);border-radius:12px;padding:6px 12px;font-size:16px;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.on{opacity:1}
+#warnbox{position:absolute;left:50%;transform:translateX(-50%);top:46%;font-size:20px;font-weight:800;color:#fff;background:rgba(200,40,40,.88);padding:6px 14px;border-radius:12px;display:none;pointer-events:none;text-align:center}
+/* controls */
+#ctl{background:var(--panel);display:grid;grid-template-columns:minmax(78px,30%) 1fr;gap:8px;padding:8px;min-height:0}
+@media (orientation:landscape) and (min-width:640px){#ctl{grid-template-columns:84px 1fr;align-content:center}}
+#notch{display:flex;flex-direction:column;background:#0b1c26;border-radius:12px;padding:4px;touch-action:none;cursor:ns-resize}
+#notch div{flex:1;min-height:19px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;border-radius:6px;color:#7f97a3}
+#notch div.on{color:#08131a}
+#btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cb{min-height:52px;border-radius:14px;font-size:18px;font-weight:800;background:var(--panel2);box-shadow:0 3px 0 #0a1a24}
+.cb:active,.cb.press{transform:translateY(2px);box-shadow:0 1px 0 #0a1a24}
+#bUp{background:#1f8a5c}#bDn{background:#c7782a}
+#bEB{grid-column:1/3;background:#b3262f;min-height:46px}
+#bDoor.ready{background:#2e7bd0;animation:pulse 1s infinite}
+@keyframes pulse{50%{filter:brightness(1.35)}}
+/* screens */
+.scr{position:fixed;inset:0;background:rgba(9,24,34,.97);overflow-y:auto;display:none;z-index:10;padding:env(safe-area-inset-top) 12px 24px}
+.scr.on{display:block}
+.card{max-width:600px;margin:12px auto;background:var(--card);border-radius:18px;padding:clamp(14px,3.5vw,24px)}
+.scr .back{color:var(--ink);text-decoration:none;font-weight:700;min-height:44px;display:inline-flex;align-items:center}
+h1{font-size:clamp(26px,6.5vw,36px);line-height:1.25;margin:4px 0 6px}
+h2{font-size:clamp(20px,5vw,26px);margin-bottom:6px}
+.goal{color:var(--mut);margin-bottom:10px}
+.how{list-style:none;display:grid;gap:8px;margin:10px 0 16px}
+.how li{display:flex;gap:10px;align-items:flex-start}
+.how li span:first-child{font-size:24px;flex:0 0 32px;text-align:center}
+.big{display:block;width:100%;min-height:54px;border-radius:14px;background:var(--acc);color:#05261a;font-size:20px;font-weight:800;margin-top:10px;box-shadow:0 4px 0 #1b7a52}
+.big.alt{background:var(--blue);color:#06243a;box-shadow:0 4px 0 #2d6e9e}
+.big.gh{background:transparent;color:var(--mut);box-shadow:none;border:2px solid #3b5e70}
+.lv{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel2);border-radius:14px;padding:10px 12px;margin-top:8px;min-height:64px}
+.lv b{display:block;font-size:18px}.lv small{color:var(--mut);font-size:16px}
+.lv .st{margin-left:auto;font-size:18px;white-space:nowrap}
+.lv:disabled{opacity:.45}
+.res{list-style:none;margin:10px 0;display:grid;gap:4px;max-height:40vh;overflow-y:auto}
+.res li{background:#10293a;border-radius:8px;padding:4px 10px;font-size:16px;display:flex;justify-content:space-between;gap:8px}
+.stars{font-size:44px;text-align:center;letter-spacing:6px}
+.fact{background:#10293a;border-left:4px solid var(--acc);border-radius:8px;padding:8px 12px;margin:10px 0;color:#dbe8ee}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <canvas id="cv"></canvas>
+    <div id="hud">
+      <div class="row top">
+        <a href="../../../">← 遊戲目錄</a>
+        <span class="chip ttl" id="hTitle">高雄輕軌</span>
+        <button class="ib" id="bMute" aria-label="音效">🔇</button>
+        <button class="ib" id="bPause" aria-label="暫停">⏸</button>
+      </div>
+      <div class="row">
+        <span class="chip" id="spdChip"><span id="spd">0<small> km/h</small></span></span>
+        <span id="lim">40</span>
+        <span class="chip">⚡<span id="eTxt">90%</span><span class="ebar"><i id="eBar"></i></span></span>
+        <span class="chip">⭐ <span id="sc">0</span></span>
+      </div>
+      <div class="row">
+        <span class="chip" id="nxt">下一站</span>
+        <span class="chip" id="tm">時刻</span>
+      </div>
+      <div class="row"><span class="chip" id="ahead" style="display:none"></span></div>
+    </div>
+    <div id="warnbox"></div>
+    <div id="toast"></div>
+  </div>
+  <div id="ctl">
+    <div id="notch" aria-label="主控桿"></div>
+    <div id="btns">
+      <button class="cb" id="bUp">▲ 加速</button>
+      <button class="cb" id="bDn">▼ 減速</button>
+      <button class="cb" id="bDoor">🚪 開門</button>
+      <button class="cb" id="bBell">🔔 響鈴</button>
+      <button class="cb" id="bEB">🛑 緊急煞車</button>
+    </div>
+  </div>
+</div>
+
+<!-- 開始畫面 -->
+<div class="scr on" id="sStart"><div class="card">
+  <a class="back" href="../../../">← 遊戲目錄</a>
+  <h1>🚋 高雄輕軌：水岸駕駛員</h1>
+  <p class="goal">駕駛環狀輕軌從籬仔內一路開到哈瑪星，安全、準點、精準停車，還要管好電量！</p>
+  <ul class="how">
+    <li><span>🎚️</span><span>「▲加速／▼減速」調整主控桿：P1–P3 是動力，N 是滑行，B1–B5 是煞車。</span></li>
+    <li><span>🛑</span><span>讓車頭停在月台的「停」標誌旁，按「🚪開門」讓乘客上下車。越準分數越高。</span></li>
+    <li><span>🚦</span><span>遵守速限與路口號誌：顯示「停」要在停止線前停下。</span></li>
+    <li><span>⚡</span><span>輕軌靠車上的電容供電：停站開門時會充電，用煞車減速也能回收一點電。</span></li>
+    <li><span>🚶</span><span>看到行人穿越要停車禮讓，可以按「🔔響鈴」提醒。</span></li>
+  </ul>
+  <p class="goal">鍵盤：↑／↓ 主控桿、空白鍵 緊急煞車、Enter 開關門、B 響鈴。</p>
+  <button class="big" id="bStart">開始駕駛 ▶</button>
+</div></div>
+
+<!-- 選關 -->
+<div class="scr" id="sLevels"><div class="card">
+  <a class="back" href="../../../">← 遊戲目錄</a>
+  <h2>選擇路段</h2>
+  <p class="goal">完成一段就能解鎖下一段。每段最多 3 顆星。</p>
+  <div id="lvList"></div>
+  <button class="big gh" id="bHelp">看玩法說明</button>
+</div></div>
+
+<!-- 關卡開始提示 -->
+<div class="scr" id="sBrief"><div class="card">
+  <h2 id="brT"></h2>
+  <p class="goal" id="brS"></p>
+  <div class="fact" id="brTip"></div>
+  <button class="big" id="bGo">出發！</button>
+  <button class="big gh" id="bBrBack">回選關</button>
+</div></div>
+
+<!-- 暫停 -->
+<div class="scr" id="sPause"><div class="card">
+  <h2>⏸ 暫停中</h2>
+  <button class="big" id="bResume">繼續駕駛</button>
+  <button class="big alt" id="bRetry">重新開始這一段</button>
+  <button class="big gh" id="bToLv">回選關</button>
+</div></div>
+
+<!-- 結果 -->
+<div class="scr" id="sResult"><div class="card">
+  <h2 id="rsT">本段完成！</h2>
+  <div class="stars" id="rsStars">⭐⭐⭐</div>
+  <p style="text-align:center;font-size:22px;font-weight:800" id="rsScore"></p>
+  <ul class="res" id="rsList"></ul>
+  <div class="fact" id="rsFact"></div>
+  <button class="big" id="bNext">下一段 ▶</button>
+  <button class="big alt" id="bAgain">再玩一次</button>
+  <button class="big gh" id="bRsLv">回選關</button>
+</div></div>
+
+<script>
+"use strict";
+/* ---------- 存檔 ---------- */
+const KEY='wg-kaohsiung-lrt-driver-';
+function load(k,d){try{const v=localStorage.getItem(KEY+k);return v===null?d:JSON.parse(v);}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v));}catch(e){}}
+
+/* ---------- 車站小知識 ---------- */
+const FACT={
+ C1:'籬仔內站是環狀輕軌的 C1 站，位在前鎮區。',
+ C2:'凱旋瑞田站在凱旋路上，輕軌在這一帶沿著舊臨港鐵路的路廊行駛。',
+ C3:'前鎮之星站可以轉乘捷運紅線的凱旋站。',
+ C4:'凱旋中華站靠近凱旋路與中華路口。',
+ C5:'夢時代站附近有大型購物中心和摩天輪。',
+ C6:'經貿園區站位在多功能經貿園區，附近有許多新大樓。',
+ C7:'軟體園區站旁邊是高雄軟體園區，很多科技公司在這裡。',
+ C8:'高雄展覽館站就在港邊的展覽館旁，常舉辦大型展覽。',
+ C9:'旅運中心站靠近高雄港旅運中心，郵輪會在這裡靠港。',
+ C10:'光榮碼頭站在愛河出海口附近的碼頭邊。',
+ C11:'真愛碼頭站附近是熱鬧的港邊廣場，常有活動。',
+ C12:'駁二大義站在駁二藝術特區，這裡是舊港口倉庫改造的藝術空間。',
+ C13:'駁二蓬萊站附近可以看到大港橋，這是一座會旋轉開合的橋。',
+ C14:'哈瑪星站的名字來自日語「濱線」，指以前沿著海邊的鐵路線。可轉乘捷運橘線西子灣站。'
+};
+
+/* ---------- 關卡 ---------- */
+// stops:[代號,站名,位置m]  lim:[起,迄,速限]  sig:[位置,相位偏移]  ped:[行人穿越位置]
+const LV=[
+ {name:'第 1 段：起步練習',sub:'C1 籬仔內 → C3 前鎮之星',
+  stops:[['C1','籬仔內',0],['C2','凱旋瑞田',360],['C3','前鎮之星',730]],
+  lim:[],sig:[],ped:[],pedP:0,E0:90,drain:1,harbor:false,
+  tip:'按「▲加速」到 P2 或 P3 出發。快到 40 km/h 時改成 N 滑行。看到月台後提早按「▼減速」，讓車頭停在「停」標誌旁再開門。'},
+ {name:'第 2 段：路口號誌',sub:'C3 前鎮之星 → C5 夢時代',
+  stops:[['C3','前鎮之星',0],['C4','凱旋中華',400],['C5','夢時代',810]],
+  lim:[[540,660,25]],sig:[[210,0],[610,8]],ped:[],pedP:0,E0:85,drain:1,harbor:false,
+  tip:'輕軌會經過汽車路口。號誌出現紅色橫槓「停」時，要在白色停止線前停下來，等綠色直槓「行」再出發。黃色「注意」代表快要變成停。'},
+ {name:'第 3 段：電量管理',sub:'C5 夢時代 → C8 高雄展覽館',
+  stops:[['C5','夢時代',0],['C6','經貿園區',380],['C7','軟體園區',760],['C8','高雄展覽館',1150]],
+  lim:[[880,980,25]],sig:[[560,4]],ped:[],pedP:0,E0:38,drain:2.4,harbor:false,
+  tip:'高雄輕軌許多路段沒有架空電線，車子靠車上的電容供電，停站時升起集電弓快速充電。這段電量少又耗電：開門時多充一下電，用 N 滑行和煞車回收電力來省電！'},
+ {name:'第 4 段：禮讓行人',sub:'C8 高雄展覽館 → C11 真愛碼頭',
+  stops:[['C8','高雄展覽館',0],['C9','旅運中心',400],['C10','光榮碼頭',790],['C11','真愛碼頭',1180]],
+  lim:[[620,720,25]],sig:[[600,10]],ped:[210,1000],pedP:1,E0:60,drain:1.6,harbor:true,
+  tip:'港邊遊客多，行人或腳踏車可能穿越軌道。看到人就減速停車，按「🔔響鈴」提醒對方。輕軌車很重，煞車距離比汽車長，要提早反應！'},
+ {name:'第 5 段：駁二到哈瑪星',sub:'C11 真愛碼頭 → C14 哈瑪星',
+  stops:[['C11','真愛碼頭',0],['C12','駁二大義',380],['C13','駁二蓬萊',770],['C14','哈瑪星',1160]],
+  lim:[[940,1060,25]],sig:[[180,3],[600,14]],ped:[260,1010],pedP:.85,E0:50,drain:1.9,harbor:true,
+  tip:'綜合挑戰：號誌、彎道限速、行人和電量都要注意。安全第一，其次準點，最後才是分數！'}
+];
+const TRAIN_LEN=34, VMAX_LIM=40;
+
+/* ---------- DOM ---------- */
+const $=id=>document.getElementById(id);
+const cv=$('cv'),cx=cv.getContext('2d');
+let W=300,H=300,DPR=1;
+function resize(){const r=$('view').getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2.5);W=Math.max(100,r.width);H=Math.max(100,r.height);cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);cx.setTransform(DPR,0,0,DPR,0,0);}
+window.addEventListener('resize',resize);
+function show(id){['sStart','sLevels','sBrief','sPause','sResult'].forEach(s=>$(s).classList.toggle('on',s===id));}
+
+/* ---------- 音效 ---------- */
+let muted=load('muted',true),AC=null,motor=null,motorG=null;
+function setMuteBtn(){$('bMute').textContent=muted?'🔇':'🔊';}
+function ac(){if(muted)return null;if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();motor=AC.createOscillator();motor.type='sawtooth';motorG=AC.createGain();motorG.gain.value=0;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=600;motor.connect(f);f.connect(motorG);motorG.connect(AC.destination);motor.start();}catch(e){AC=null;}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,v,type,delay){const a=ac();if(!a)return;const t=a.currentTime+(delay||0);const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.05);}
+function bell(){tone(1320,.5,.12);tone(1760,.4,.08,'sine',.02);tone(1320,.5,.12,'sine',.28);tone(1760,.4,.08,'sine',.3);}
+function chime(){[659,784,988].forEach((f,i)=>tone(f,.5,.1,'sine',i*.16));}
+function beep(){tone(880,.12,.07,'square');}
+$('bMute').addEventListener('click',()=>{muted=!muted;save('muted',muted);setMuteBtn();if(muted&&motorG)motorG.gain.value=0;else ac();});
+
+/* ---------- 遊戲狀態 ---------- */
+let S=null,run=false,lvIdx=0;
+const prog=load('prog',{unlocked:1,stars:[0,0,0,0,0],best:[0,0,0,0,0]});
+function sigPhase(t,off){const c=(t+off)%20;return c<9?'G':c<12?'Y':'R';}
+function limitAt(p){let v=VMAX_LIM,k=-1;S.L.lim.forEach((z,i)=>{if(p>=z[0]-2&&p<=z[1]&&z[2]<v){v=z[2];k=i;}});return [v,k];}
+
+function startLevel(i){
+  lvIdx=i;const L=LV[i];
+  const tg=[0];
+  for(let k=1;k<L.stops.length;k++){const d=L.stops[k][2]-L.stops[k-1][2];const ns=L.sig.filter(s=>s[0]>L.stops[k-1][2]&&s[0]<L.stops[k][2]).length;tg.push(tg[k-1]+(k>1?14:0)+d/8.2+5+ns*6);}
+  S={L,pos:0,v:0,notch:0,E:L.E0,t:0,score:0,doors:'closed',dwell:0,next:1,log:[],tg,
+     safety:0,overT:0,beepT:0,zonePen:{},sigPen:{},emptyPen:false,ending:-1,toastT:0,
+     peds:L.ped.map(p=>({pos:p,st:0,t:0,dur:6,kind:Math.random()<.5?'🚶':'🚲',rung:false,scared:false,crash:false,wait:false}))};
+  $('hTitle').textContent=L.name;
+  buildNotch();updateHud();
+  run=true;show(null);last=performance.now();
+  toast('從 '+L.stops[0][1]+' 出發！先按「▲加速」');
+}
+function addScore(n,txt){S.score+=n;S.log.push([txt,n]);toast(txt+(n?'（'+(n>0?'+':'')+n+'）':''));}
+let toastTimer=0;
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('on'),2600);}
+
+/* ---------- 操作 ---------- */
+const NOTCH=[3,2,1,0,-1,-2,-3,-4,-5,-6];
+const NLAB={3:'P3',2:'P2',1:'P1',0:'N','-1':'B1','-2':'B2','-3':'B3','-4':'B4','-5':'B5','-6':'EB'};
+function buildNotch(){const n=$('notch');if(n.children.length)return paintNotch();NOTCH.forEach(v=>{const d=document.createElement('div');d.textContent=NLAB[v];d.dataset.v=v;n.appendChild(d);});paintNotch();}
+function paintNotch(){[...$('notch').children].forEach(d=>{const v=+d.dataset.v,on=S&&v===S.notch;d.classList.toggle('on',on);d.style.background=on?(v>0?'#35c98a':v===0?'#e8eef2':v===-6?'#ff6b6b':'#ffb35c'):'transparent';});}
+function setNotch(v){if(!S||!run)return;v=Math.max(-6,Math.min(3,v));if(v!==S.notch){S.notch=v;paintNotch();ac();}}
+function notchUp(){if(!S)return;setNotch(S.notch===-6?-5:S.notch+1);}
+function notchDn(){if(!S)return;setNotch(S.notch<=-5?(S.notch===-6?-6:-5):S.notch-1);}
+function eb(){setNotch(-6);}
+(function(){const n=$('notch');let drag=false;
+ function pick(e){const r=n.getBoundingClientRect();const k=Math.floor((e.clientY-r.top)/r.height*NOTCH.length);setNotch(NOTCH[Math.max(0,Math.min(NOTCH.length-1,k))]);}
+ n.addEventListener('pointerdown',e=>{drag=true;try{n.setPointerCapture(e.pointerId);}catch(_){}pick(e);});
+ n.addEventListener('pointermove',e=>{if(drag)pick(e);});
+ ['pointerup','pointercancel'].forEach(t=>n.addEventListener(t,()=>drag=false));})();
+function bindBtn(id,fn){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('press');fn();});['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>b.classList.remove('press')));}
+bindBtn('bUp',notchUp);bindBtn('bDn',notchDn);bindBtn('bEB',eb);bindBtn('bDoor',door);bindBtn('bBell',ring);
+window.addEventListener('keydown',e=>{if(!run)return;if(e.repeat&&(e.key===' '||e.key==='Enter'))return;
+ const k=e.key;if(k==='ArrowUp'||k==='w'||k==='W'){notchUp();e.preventDefault();}
+ else if(k==='ArrowDown'||k==='s'||k==='S'){notchDn();e.preventDefault();}
+ else if(k===' '){eb();e.preventDefault();}
+ else if(k==='Enter'||k==='d'||k==='D'){door();e.preventDefault();}
+ else if(k==='b'||k==='B'||k==='h'||k==='H'){ring();}
+ else if(k==='Escape'||k==='p'||k==='P'){pause();}});
+
+function ring(){if(!S||!run)return;bell();let any=false;S.peds.forEach(p=>{if(p.st===1&&!p.rung&&p.pos-S.pos<130&&p.pos-S.pos>-5){p.rung=true;any=true;}});if(any)toast('🔔 叮叮！提醒行人注意');}
+
+function door(){
+  if(!S||!run||S.ending>=0)return;
+  const st=S.L.stops[S.next];
+  if(S.doors==='open'){
+    if(S.dwell<5){toast('乘客上下車中…再等 '+Math.ceil(5-S.dwell)+' 秒');return;}
+    S.doors='closed';S.next++;beep();toast('關門，準備出發！');return;
+  }
+  if(!st)return;
+  if(S.v>0.1){toast('列車完全停止後才能開門');return;}
+  const d=S.pos-st[2];
+  if(d<-8){toast('還沒到停車位置，再往前 '+Math.round(-d)+' 公尺');return;}
+  if(d>25){toast('離月台太遠，無法開門');return;}
+  const a=Math.abs(d);let pts,lab;
+  if(a<=0.5){pts=100;lab='完美停車';}else if(a<=1.5){pts=80;lab='精準停車';}else if(a<=3){pts=50;lab='停車不錯';}else if(a<=8){pts=20;lab='停車偏差較大';}else{pts=0;lab='停過頭了';}
+  addScore(pts,st[0]+' '+st[1]+' '+lab+' '+(d>=0?'+':'')+d.toFixed(1)+' m');
+  const late=S.t-S.tg[S.next],e=Math.abs(late);
+  const pp=e<=15?50:e<=35?20:0;
+  S.log.push([(late>15?'晚 ':late<-15?'早 ':'準點 ')+Math.round(e)+' 秒到站',pp]);S.score+=pp;
+  S.doors='open';S.dwell=0;chime();
+  if(S.next===S.L.stops.length-1){S.ending=3;}
+  setTimeout(()=>{if(S&&run)toast('📍 '+FACT[st[0]]);},1400);
+}
+
+/* ---------- 更新 ---------- */
+function update(dt){
+  const L=S.L;S.t+=dt;
+  const low=S.E<=0;
+  let a=0;
+  if(S.doors==='open'){a=-2;S.dwell+=dt;}
+  else if(S.notch===-6)a=-1.7;
+  else if(S.notch<0)a=S.notch/5*1.2;
+  else if(S.notch>0){const kmh=S.v*3.6;let ap=1.0*S.notch/3;if(kmh>30)ap*=30/kmh;if(kmh>58)ap=0;if(low)ap*=0.3;a=ap;}
+  if(S.v>0)a-=0.012+0.0004*S.v+0.0001*S.v*S.v;
+  const prev=S.pos;
+  S.v=Math.max(0,S.v+a*dt);S.pos+=S.v*dt;
+  // 電量
+  if(S.doors==='open')S.E=Math.min(100,S.E+7*dt);
+  else{
+    if(S.notch>0&&!low)S.E-=S.notch/3*(0.35+0.05*S.v)*L.drain*dt;
+    else if(S.notch<0&&S.notch>-6&&S.v>0.5)S.E+=(-S.notch)/5*0.05*S.v*dt;
+    S.E-=0.02*dt;
+  }
+  S.E=Math.max(0,Math.min(100,S.E));
+  if(S.E<=0&&!S.emptyPen){S.emptyPen=true;addScore(-80,'電量耗盡！只能低速行駛');}
+  // 速限
+  const [lim,zk]=limitAt(S.pos),kmh=S.v*3.6;
+  if(kmh>lim+1){S.overT+=dt;S.beepT+=dt;if(S.beepT>.45){S.beepT=0;beep();}
+    const key=zk<0?'d'+S.next:'z'+zk;if(S.overT>1.5&&!S.zonePen[key]){S.zonePen[key]=1;addScore(-30,'超速！速限 '+lim+' km/h');}}
+  else S.overT=0;
+  // 號誌
+  L.sig.forEach((s,i)=>{const sl=s[0]-6;if(prev<sl&&S.pos>=sl&&sigPhase(S.t,s[1])==='R'&&!S.sigPen[i]){S.sigPen[i]=1;S.safety++;addScore(-150,'闖紅燈！路口要停車等「行」');}});
+  // 行人
+  S.peds.forEach(p=>{
+    const d=p.pos-S.pos;
+    if(p.st===0){if(d<=95){if(Math.random()<L.pedP){p.st=1;p.t=0;p.dur=5+Math.random()*2;}else p.st=2;}return;}
+    if(p.st!==1)return;
+    let pr=p.t/p.dur;
+    p.wait=pr<0.22&&d>-TRAIN_LEN-2&&(d<4||(d<14&&S.v>1.5));
+    if(p.wait){if(S.v>4&&!p.scared&&d<10){p.scared=true;addScore(-20,'沒有減速禮讓，行人嚇了一跳');}}
+    else p.t+=dt*(p.rung?1.7:1);
+    pr=p.t/p.dur;
+    const onTrack=pr>0.25&&pr<0.8;
+    if(onTrack&&d<=1&&d>-TRAIN_LEN){p.crash=true;p.st=2;S.safety++;S.v=0;setNotch(-6);addScore(-200,'危險！差點撞到行人，系統緊急停車');}
+    if(pr>=1){p.st=2;if(!p.scared)addScore(30+(p.rung?10:0),'禮讓行人'+(p.rung?'＋響鈴提醒':''));}
+  });
+  // 過站
+  const st=L.stops[S.next];
+  if(st&&S.doors==='closed'&&S.pos-st[2]>40){addScore(-100,'過站不停：'+st[1]);S.next++;if(S.next>=L.stops.length){S.ending=0.5;}}
+  if(S.ending>=0){S.ending-=dt;if(S.ending<0)finish();}
+  // 馬達聲
+  if(motorG&&AC&&!muted){motor.frequency.value=40+S.v*9;motorG.gain.value=(S.notch>0&&S.doors==='closed'&&!low?0.03:S.notch<0&&S.v>0.5?0.015:0);}
+}
+
+function finish(){
+  run=false;if(motorG)motorG.gain.value=0;
+  const L=S.L,n=L.stops.length-1;
+  const possible=n*150+S.peds.length*40;
+  const r=S.score/possible;
+  let stars=r>=0.75?3:r>=0.45?2:1;if(S.safety>0)stars=Math.min(stars,1);
+  if(S.score<=0)stars=1;
+  prog.stars[lvIdx]=Math.max(prog.stars[lvIdx],stars);prog.best[lvIdx]=Math.max(prog.best[lvIdx],S.score);
+  prog.unlocked=Math.max(prog.unlocked,Math.min(LV.length,lvIdx+2));save('prog',prog);
+  $('rsT').textContent=lvIdx===LV.length-1?'🎉 抵達哈瑪星，全線完成！':L.name+' 完成！';
+  $('rsStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  $('rsScore').textContent='得分 '+S.score+'　｜　安全事件 '+S.safety+' 次';
+  $('rsList').innerHTML=S.log.map(l=>'<li><span>'+l[0]+'</span><b style="color:'+(l[1]>0?'#7fe0b0':l[1]<0?'#ff9a9a':'#ccc')+'">'+(l[1]>0?'+':'')+l[1]+'</b></li>').join('');
+  let fb;
+  if(S.safety>0)fb='這次有安全事件，所以最多 1 顆星。真正的輕軌司機一定把安全放第一：看到紅燈或行人就要提早減速。';
+  else if(stars===3)fb='太厲害了！你同時做到安全、準點和精準停車，已經是優秀的輕軌司機。';
+  else fb='小撇步：速度越快，煞車距離越長。試著在離「停」標誌約 60–80 公尺時開始用 B2–B3 減速，最後用 B1 微調。';
+  $('rsFact').textContent=fb;
+  $('bNext').style.display=lvIdx<LV.length-1?'block':'none';
+  show('sResult');
+}
+
+/* ---------- HUD ---------- */
+function updateHud(){
+  const kmh=S.v*3.6,[lim]=limitAt(S.pos);
+  $('spd').innerHTML=Math.round(kmh)+'<small> km/h</small>';
+  $('lim').textContent=lim;
+  $('spdChip').classList.toggle('over',kmh>lim+1);
+  $('eTxt').textContent=Math.round(S.E)+'%';
+  const eb=$('eBar');eb.style.width=S.E+'%';eb.style.background=S.E<20?'#ff6b6b':S.E<45?'#ffc94a':'#35c98a';
+  $('sc').textContent=S.score;
+  const st=S.L.stops[S.next];
+  if(S.doors==='open'){$('nxt').textContent='⚡ 充電中・乘客上下車 '+(S.dwell<5?Math.ceil(5-S.dwell)+' 秒':'→ 可關門');}
+  else if(st){const d=st[2]-S.pos;$('nxt').textContent='下一站 '+st[0]+' '+st[1]+'　'+(d>=0?Math.round(d)+' m':'超過 '+Math.round(-d)+' m');}
+  else $('nxt').textContent='終點到了';
+  const tgt=st?S.tg[S.next]:S.t,rem=tgt-S.t;
+  $('tm').textContent=st&&S.doors==='closed'?(rem>=0?'⏱ 預定還有 '+Math.round(rem)+' 秒':'⏱ 已晚 '+Math.round(-rem)+' 秒'):'⏱ '+Math.round(S.t)+' 秒';
+  // 前方提示
+  let ah='',warn='';
+  for(const s of S.L.sig){const d=s[0]-6-S.pos;if(d>-2&&d<160){const ph=sigPhase(S.t,s[1]);ah='🚦 前方號誌 '+(ph==='G'?'行':ph==='Y'?'注意':'停')+'　'+Math.max(0,Math.round(d))+' m';break;}}
+  for(const p of S.peds){const d=p.pos-S.pos;if(p.st===1&&d>-3&&d<130){ah=p.kind+' 前方有人穿越！'+Math.max(0,Math.round(d))+' m';if(d<60)warn=p.kind+' 注意行人！';break;}}
+  for(const z of S.L.lim){const d=z[0]-S.pos;if(d>0&&d<120&&!ah){ah='⚠ 前方彎道速限 '+z[2]+'　'+Math.round(d)+' m';}}
+  if(S.E<15&&S.E>0)warn=warn||'⚡ 電量不足，進站記得充電';
+  const ae=$('ahead');ae.style.display=ah?'':'none';ae.textContent=ah;
+  const wb=$('warnbox');wb.style.display=warn?'block':'none';wb.textContent=warn;
+  const dOk=st&&S.doors==='closed'&&S.v<0.1&&S.pos-st[2]>=-8&&S.pos-st[2]<=25;
+  const bd=$('bDoor');bd.classList.toggle('ready',!!dOk||(S.doors==='open'&&S.dwell>=5&&S.ending<0));
+  bd.textContent=S.doors==='open'?'🚪 關門':'🚪 開門';
+}
+
+/* ---------- 繪圖 ---------- */
+function hash(n){const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);}
+function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath();}
+function draw(){
+  const L=S.L;
+  const ppm=Math.max(3.6,Math.min(9,W/90));
+  const fx=Math.round(W*0.36);
+  const gy=Math.round(H-Math.max(64,Math.min(H*0.22,150)));
+  const th=Math.max(34,Math.min(70,H*0.095));
+  const X=p=>fx+(p-S.pos)*ppm;
+  // 天空
+  const g=cx.createLinearGradient(0,0,0,gy);g.addColorStop(0,'#5fb4ec');g.addColorStop(1,'#cfeefd');cx.fillStyle=g;cx.fillRect(0,0,W,gy);
+  cx.fillStyle='#fff6b0';cx.beginPath();cx.arc(W*0.85,H*0.2,Math.min(W,H)*0.035,0,7);cx.fill();
+  // 遠景
+  if(L.harbor){
+    cx.fillStyle='#3d8fc4';cx.fillRect(0,gy-th*1.6,W,th*1.3);
+    const off=S.pos*ppm*0.15;
+    for(let i=Math.floor(off/260)-1;i<Math.floor((off+W)/260)+2;i++){const x=i*260-off,h=hash(i);
+      if(h<.5){cx.fillStyle='#e9eef2';rr(x+20,gy-th*1.9,120,th*0.45,6);cx.fill();cx.fillStyle='#c33';cx.fillRect(x+90,gy-th*2.3,18,th*0.45);}
+      else{cx.strokeStyle='#d35e3a';cx.lineWidth=4;cx.beginPath();cx.moveTo(x+60,gy-th*1.4);cx.lineTo(x+60,gy-th*3.2);cx.lineTo(x+150,gy-th*3.2);cx.stroke();}}
+  }else{
+    const off=S.pos*ppm*0.25;
+    for(let i=Math.floor(off/70)-1;i<Math.floor((off+W)/70)+2;i++){const x=i*70-off,h=hash(i),bh=th*(1.2+h*3.2);
+      cx.fillStyle=['#8fa9bb','#9cb6c6','#7f99ad'][i&1?(h>.5?2:1):0];cx.fillRect(x,gy-bh,58,bh);
+      cx.fillStyle='rgba(255,255,255,.45)';for(let y=gy-bh+8;y<gy-14;y+=14)for(let k=6;k<52;k+=14)cx.fillRect(x+k,y,7,7);}
+  }
+  // 椰子樹（中景）
+  const off2=S.pos*ppm*0.7;
+  for(let i=Math.floor(off2/150)-1;i<Math.floor((off2+W)/150)+2;i++){const x=i*150-off2+hash(i+9)*60;
+    cx.strokeStyle='#8a6a43';cx.lineWidth=5;cx.beginPath();cx.moveTo(x,gy-6);cx.quadraticCurveTo(x+6,gy-th,x+2,gy-th*1.7);cx.stroke();
+    cx.fillStyle='#2f9a52';for(let k=0;k<5;k++){cx.beginPath();cx.ellipse(x+2+Math.cos(k*1.3)*th*.35,gy-th*1.7+Math.sin(k*1.3)*th*.12,th*.38,th*.1,k*1.3,0,7);cx.fill();}}
+  // 地面：草皮軌道 + 道路
+  cx.fillStyle='#5cb85c';cx.fillRect(0,gy-8,W,22);
+  cx.fillStyle='#777';cx.fillRect(0,gy+14,W,H-gy);
+  cx.fillStyle='#bbb';cx.fillRect(0,gy+14,W,4);
+  cx.fillStyle='#eee';const dash=(S.pos*ppm)%60;for(let x=-dash;x<W;x+=60)cx.fillRect(x,gy+(H-gy)/2+6,30,4);
+  cx.strokeStyle='#4b4b4b';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,gy);cx.lineTo(W,gy);cx.stroke();
+  const vis=p=>X(p)>-160&&X(p)<W+160;
+  // 斑馬線
+  S.peds.forEach(p=>{if(!vis(p.pos))return;const x=X(p.pos);cx.fillStyle='rgba(255,255,255,.85)';for(let k=0;k<5;k++)cx.fillRect(x+k*ppm*1.1,gy-8,ppm*0.6,H-gy+8);});
+  // 速限標誌
+  L.lim.forEach(z=>{[[z[0],z[2]],[z[1],VMAX_LIM]].forEach(([p,v])=>{if(!vis(p))return;const x=X(p),r=th*0.32;cx.fillStyle='#666';cx.fillRect(x-2,gy-th*1.5,4,th*1.5);cx.fillStyle='#fff';cx.beginPath();cx.arc(x,gy-th*1.5,r,0,7);cx.fill();cx.strokeStyle='#d22';cx.lineWidth=r*0.25;cx.stroke();cx.fillStyle='#111';cx.font='bold '+Math.round(r*0.95)+'px sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(v,x,gy-th*1.5+1);});});
+  // 車站
+  L.stops.forEach((s,i)=>{const p=s[2];if(!vis(p)&&!vis(p-TRAIN_LEN))return;const x0=X(p-TRAIN_LEN-3),x1=X(p+5);
+    cx.fillStyle='#c9c2b5';cx.fillRect(x0,gy-th*0.55,x1-x0,th*0.45);cx.fillStyle='#e9e2d4';cx.fillRect(x0,gy-th*0.6,x1-x0,5);
+    cx.fillStyle='#3a6f8f';cx.fillRect(x0,gy-th*2.05,x1-x0,6);cx.fillRect(x0+4,gy-th*2.05,4,th*1.45);cx.fillRect(x1-8,gy-th*2.05,4,th*1.45);
+    cx.fillStyle='#ffcf33';cx.fillRect(X(p-TRAIN_LEN/2)-ppm*4,gy-th*1.95,ppm*8,3);
+    const sx=(x0+x1)/2;cx.font='bold 16px sans-serif';const tw=cx.measureText(s[0]+' '+s[1]).width+14;
+    cx.fillStyle='#0d5a7a';rr(sx-tw/2,gy-th*2.05-26,tw,24,6);cx.fill();cx.fillStyle='#fff';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(s[0]+' '+s[1],sx,gy-th*2.05-13);
+    if(i>0){const x=X(p);cx.fillStyle='#333';cx.fillRect(x-1.5,gy-th*1.25,3,th*1.25);cx.fillStyle=i===S.next?'#ff4d4d':'#999';rr(x-13,gy-th*1.25-24,26,24,5);cx.fill();cx.fillStyle='#fff';cx.font='bold 16px sans-serif';cx.fillText('停',x,gy-th*1.25-11);}
+  });
+  // 號誌
+  L.sig.forEach(s=>{if(!vis(s[0]))return;const x=X(s[0]),sl=X(s[0]-6),ph=sigPhase(S.t,s[1]);
+    cx.fillStyle='#fff';cx.fillRect(sl-2,gy-8,4,22);
+    cx.fillStyle='#444';cx.fillRect(x-2,gy-th*1.9,4,th*1.9);
+    const bw=th*0.55;cx.fillStyle='#111';rr(x-bw/2,gy-th*1.9-bw*1.3,bw,bw*1.3,5);cx.fill();
+    const cxm=x,cym=gy-th*1.9-bw*0.65;cx.lineCap='round';cx.lineWidth=bw*0.16;
+    if(ph==='G'){cx.strokeStyle='#4dff88';cx.beginPath();cx.moveTo(cxm,cym-bw*0.4);cx.lineTo(cxm,cym+bw*0.4);cx.stroke();}
+    else if(ph==='Y'){cx.fillStyle='#ffd24a';cx.beginPath();cx.arc(cxm,cym,bw*0.2,0,7);cx.fill();}
+    else{cx.strokeStyle='#ff4040';cx.beginPath();cx.moveTo(cxm-bw*0.32,cym);cx.lineTo(cxm+bw*0.32,cym);cx.stroke();}
+    cx.lineCap='butt';});
+  // 列車
+  drawTrain(fx,gy,TRAIN_LEN*ppm,th);
+  // 行人（在列車前方繪製）
+  S.peds.forEach(p=>{if(p.st!==1&&!(p.st===2&&p.crash))return;if(!vis(p.pos))return;const pr=Math.min(1,p.t/p.dur);const y=gy+(H-gy)*0.75-pr*((H-gy)*0.75+th*0.9);
+    cx.font=Math.round(th*0.8)+'px sans-serif';cx.textAlign='center';cx.textBaseline='bottom';cx.fillText(p.kind,X(p.pos+2.5),y);});
+}
+function drawTrain(fx,gy,len,th){
+  const x0=fx-len,y0=gy-th-4,open=S.doors==='open';
+  cx.fillStyle='#222';for(let k=0;k<4;k++){cx.beginPath();cx.arc(x0+len*(0.12+k*0.25),gy-3,4,0,7);cx.fill();}
+  const seg=len/3;
+  for(let k=0;k<3;k++){const sx=x0+k*seg+1,w=seg-2;
+    cx.fillStyle='#f4f6f8';rr(sx,y0,w,th,k===2?th*0.35:6);cx.fill();
+    cx.fillStyle='#16a34a';cx.fillRect(sx,y0+th*0.72,w,th*0.1);
+    cx.fillStyle='#1b2a35';cx.fillRect(sx+w*0.08,y0+th*0.18,w*0.84,th*0.32);
+    cx.fillStyle=open?'#ffe58a':'#9fb3c0';cx.fillRect(sx+w*0.42,y0+th*0.15,w*0.16,th*0.8);
+    if(open){cx.fillStyle='#55462c';cx.fillRect(sx+w*0.47,y0+th*0.15,w*0.06,th*0.8);}}
+  // 車頭
+  cx.fillStyle='#1b2a35';cx.beginPath();cx.moveTo(fx-th*0.55,y0+th*0.14);cx.lineTo(fx-th*0.1,y0+th*0.14);cx.lineTo(fx-1,y0+th*0.55);cx.lineTo(fx-th*0.55,y0+th*0.55);cx.fill();
+  cx.fillStyle=S.notch<0?'#ff5050':'#fff3a0';cx.fillRect(fx-5,y0+th*0.68,4,4);
+  // 集電弓
+  const px=x0+seg*1.5,up=open;
+  cx.strokeStyle='#333';cx.lineWidth=2;cx.beginPath();cx.moveTo(px-8,y0);cx.lineTo(px,y0-(up?th*0.55:6));cx.lineTo(px+8,y0);cx.stroke();
+  cx.fillRect(px-10,y0-(up?th*0.55:6)-2,20,3);
+  if(up){cx.fillStyle='#ffd400';cx.font=Math.round(th*0.45)+'px sans-serif';cx.textAlign='center';cx.textBaseline='bottom';if(Math.floor(S.t*4)%2)cx.fillText('⚡',px+th*0.4,y0-th*0.3);}
+}
+
+/* ---------- 主迴圈 ---------- */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(S){if(run){update(dt);if(run)updateHud();}draw();}
+  requestAnimationFrame(loop);
+}
+
+/* ---------- 選關與畫面 ---------- */
+function renderLevels(){
+  $('lvList').innerHTML='';
+  LV.forEach((L,i)=>{const b=document.createElement('button');b.className='lv';b.disabled=i>=prog.unlocked;
+    b.innerHTML='<span style="font-size:28px">'+(i>=prog.unlocked?'🔒':'🚋')+'</span><span><b>'+L.name+'</b><small>'+L.sub+'</small></span><span class="st">'+'⭐'.repeat(prog.stars[i])+'☆'.repeat(3-prog.stars[i])+'</span>';
+    b.addEventListener('click',()=>brief(i));$('lvList').appendChild(b);});
+  show('sLevels');
+}
+function brief(i){lvIdx=i;const L=LV[i];$('brT').textContent='🚋 '+L.name;$('brS').textContent=L.sub+'（'+(L.stops.length-1)+' 個停靠站）';$('brTip').textContent='💡 '+L.tip;show('sBrief');}
+function pause(){if(!run)return;run=false;if(motorG)motorG.gain.value=0;show('sPause');}
+$('bStart').addEventListener('click',()=>{ac();renderLevels();});
+$('bHelp').addEventListener('click',()=>show('sStart'));
+$('bGo').addEventListener('click',()=>{ac();startLevel(lvIdx);});
+$('bBrBack').addEventListener('click',renderLevels);
+$('bPause').addEventListener('click',pause);
+$('bResume').addEventListener('click',()=>{run=true;last=performance.now();show(null);});
+$('bRetry').addEventListener('click',()=>startLevel(lvIdx));
+$('bToLv').addEventListener('click',()=>{S=null;renderLevels();});
+$('bAgain').addEventListener('click',()=>startLevel(lvIdx));
+$('bNext').addEventListener('click',()=>brief(Math.min(LV.length-1,lvIdx+1)));
+$('bRsLv').addEventListener('click',renderLevels);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+
+setMuteBtn();resize();
+// 預覽畫面：開始前先畫一個靜止場景
+S={L:LV[0],pos:-20,v:0,notch:0,E:90,t:0,score:0,doors:'closed',dwell:0,next:1,peds:[],tg:[0,0,0],log:[],ending:-1};
+buildNotch();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

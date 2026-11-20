@@ -1,6 +1,30 @@
 {
   "games": [
     {
+      "id": "kaohsiung-lrt-driver",
+      "title": "高雄輕軌：水岸駕駛員",
+      "emoji": "🚋",
+      "category": "drive",
+      "sub": "鐵道",
+      "grade": "3–6 年級",
+      "minutes": 12,
+      "players": "單人",
+      "mechanic": "模擬駕駛＋能源管理",
+      "date": "2026-11-20",
+      "desc": "駕駛高雄環狀輕軌從籬仔內開到哈瑪星，共 5 段 13 站。操作主控桿精準停車、遵守路口號誌與彎道速限、禮讓行人，還要善用停站充電與煞車回收管理電量。",
+      "tags": [
+        "高雄輕軌",
+        "環狀輕軌",
+        "號誌",
+        "速限",
+        "煞車距離",
+        "能源",
+        "禮讓行人",
+        "高雄地名"
+      ],
+      "path": "games/drive/kaohsiung-lrt-driver/"
+    },
+    {
       "id": "balance-detective",
       "title": "天平偵探：水果有多重？",
       "emoji": "⚖️",

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>擺錘實驗室：公平測試大挑戰</title>
+<style>
+:root{
+  --bg:#eef4fb;--card:#fff;--ink:#1f2d3d;--sub:#5b6b7d;--line:#d3e0ee;
+  --a:#e0703a;--b:#2f7fd0;--ok:#2f8f6f;--warn:#c0392b;--hl:#fff5d6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:17px;line-height:1.5;touch-action:manipulation;-webkit-user-select:none;user-select:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font:inherit;color:inherit;border:none;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.4;cursor:not-allowed}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+.top a{color:var(--ok);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center;padding:0 4px;white-space:nowrap}
+.top .info{font-weight:700;color:var(--sub);font-size:16px;text-align:center;flex:1}
+.iconbtn{min-width:44px;min-height:44px;border-radius:12px;background:var(--card);border:2px solid var(--line);font-size:20px}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 12px 28px}
+.screen{display:none}.screen.on{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:clamp(12px,2.5vw,22px);margin-bottom:12px}
+h1{font-size:clamp(26px,6vw,40px);line-height:1.2;margin-bottom:6px}
+h2{font-size:clamp(19px,4vw,24px);margin-bottom:6px}
+.goal{color:var(--sub);font-size:18px;margin-bottom:12px}
+.rules{list-style:none;display:grid;gap:8px;margin:10px 0 16px}
+.rules li{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border-radius:12px;padding:8px 12px}
+.rules .ic{font-size:24px;line-height:1.3}
+.big{display:block;width:100%;min-height:56px;border-radius:16px;background:var(--a);color:#fff;font-size:20px;font-weight:800;box-shadow:0 4px 0 #b3532a;margin-top:8px}
+.big.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.big:active{transform:translateY(2px)}
+.game{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:820px) and (orientation:landscape){.game{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start}.stage{position:sticky;top:64px}}
+.qcard{background:var(--hl);border-color:#f0d78c}
+.qtag{display:inline-block;font-size:15px;font-weight:700;background:#fff;border-radius:999px;padding:2px 10px;margin-bottom:4px;color:var(--sub)}
+.stage{padding:8px}
+#cv{width:100%;height:clamp(220px,40vh,420px);display:block;border-radius:12px;background:linear-gradient(#f9fcff,#e6eff9)}
+.watch{display:flex;justify-content:space-around;gap:8px;font-weight:700;font-size:17px;padding:6px 0 0;flex-wrap:wrap;text-align:center}
+.watch .a{color:var(--a)}.watch .b{color:var(--b)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.panels.one{grid-template-columns:1fr}
+.pnl{border:2px solid var(--line);border-radius:14px;padding:8px}
+.pnl h3{font-size:18px;margin-bottom:4px}
+.pnl.A h3{color:var(--a)}.pnl.B h3{color:var(--b)}
+.row{margin:4px 0}
+.row .lb{font-size:16px;color:var(--sub);display:flex;justify-content:space-between}
+.row .lb .diff{color:var(--warn);font-weight:700}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:44px;height:44px;border-radius:12px;background:var(--bg);border:2px solid var(--line);font-size:22px;font-weight:800;flex:0 0 44px}
+.step .v{flex:1;text-align:center;font-weight:800;font-size:18px;min-width:56px;border-radius:10px;padding:6px 0}
+.step .v.changed{background:#ffe7d9}
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts button{flex:1;min-height:52px;border-radius:14px;font-weight:800;font-size:18px}
+.run{background:var(--ok);color:#fff;box-shadow:0 3px 0 #1f6b52}
+.log{margin-top:8px;font-size:16px}
+.log table{width:100%;border-collapse:collapse}
+.log th,.log td{border-bottom:1px solid var(--line);padding:4px 3px;text-align:center}
+.log th{color:var(--sub);font-weight:700}
+.log td.a{color:var(--a);font-weight:700}.log td.b{color:var(--b);font-weight:700}
+.empty{color:var(--sub);text-align:center;padding:6px}
+.concl{display:grid;gap:8px;margin-top:10px}
+.concl button,.opt{min-height:52px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-weight:700;font-size:17px;padding:8px 12px;text-align:left}
+.concl button:not(:disabled):hover,.opt:hover{border-color:var(--b)}
+.fb{border-radius:14px;padding:10px 12px;margin-top:10px;font-size:17px}
+.fb.good{background:#e3f5ec;border:2px solid #9ad3b9}
+.fb.bad{background:#fdeaea;border:2px solid #f0b3b3}
+.fb.tip{background:#eaf2fd;border:2px solid #b5cff0}
+.stars{font-size:26px;letter-spacing:2px}
+.opt{display:block;width:100%;margin-top:8px}
+.opt small{display:block;font-weight:400;color:var(--sub);font-size:16px}
+.opt.right{border-color:var(--ok);background:#e3f5ec}
+.opt.wrong{border-color:var(--warn);background:#fdeaea}
+.prog{display:flex;gap:6px;justify-content:center;margin:4px 0 8px}
+.prog span{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;background:var(--card);border:2px solid var(--line)}
+.prog span.cur{border-color:var(--a);color:var(--a)}
+.prog span.done{background:var(--ok);color:#fff;border-color:var(--ok)}
+.sum{list-style:none;display:grid;gap:6px;margin:8px 0}
+.sum li{background:var(--bg);border-radius:12px;padding:8px 12px;display:flex;justify-content:space-between;gap:8px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="../../../">← 遊戲目錄</a>
+  <div class="info" id="info">⏱️ 擺錘實驗室</div>
+  <button class="iconbtn" id="mute" aria-label="音效開關">🔇</button>
+</div>
+
+<div class="wrap">
+  <!-- 開始畫面 -->
+  <section class="screen on" id="sStart">
+    <div class="card">
+      <h1>⏱️ 擺錘實驗室</h1>
+      <p class="goal">當個小科學家：用「公平測試」找出到底是什麼決定擺錘擺得快或慢！</p>
+      <ul class="rules">
+        <li><span class="ic">🎯</span><span>每一關先讀「研究問題」，想清楚要測試哪一個變因。</span></li>
+        <li><span class="ic">⚖️</span><span>設定擺錘 A 和 B：<b>只改要測試的那一項</b>，其他條件都要一樣，才是公平的實驗。</span></li>
+        <li><span class="ic">⏱️</span><span>按「開始實驗」，計時擺錘來回擺動 10 次要幾秒。</span></li>
+        <li><span class="ic">🔁</span><span>測量會有一點點誤差，多做幾次比較可靠。</span></li>
+        <li><span class="ic">💡</span><span>看數據寫結論，每關最多拿 3 顆星，共 5 關。</span></li>
+      </ul>
+      <button class="big" id="btnStart">開始實驗</button>
+      <button class="big alt hidden" id="btnReset">從第 1 關重新開始</button>
+    </div>
+  </section>
+
+  <!-- 遊戲畫面 -->
+  <section class="screen" id="sGame">
+    <div class="prog" id="prog"></div>
+    <div class="game">
+      <div>
+        <div class="card qcard">
+          <span class="qtag" id="qtag">第 1 關</span>
+          <h2 id="qtitle">研究問題</h2>
+          <p id="qtext"></p>
+        </div>
+        <div class="card stage">
+          <canvas id="cv"></canvas>
+          <div class="watch" id="watch"><span>按「開始實驗」開始計時</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" id="labCard">
+          <div class="panels" id="panels"></div>
+          <div class="acts">
+            <button class="run" id="btnRun">▶ 開始實驗</button>
+          </div>
+          <div class="log" id="log"></div>
+          <div id="conclBox"></div>
+          <div id="fbBox"></div>
+        </div>
+        <div class="card hidden" id="detCard"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 結束畫面 -->
+  <section class="screen" id="sEnd">
+    <div class="card">
+      <h1>🎓 實驗報告完成！</h1>
+      <p class="goal" id="endMsg"></p>
+      <div class="stars" id="endStars" style="text-align:center"></div>
+      <ul class="sum" id="endList"></ul>
+      <div class="fb tip"><b>📒 我們的發現</b><br>
+        1. 擺長（繩子長度）越長，擺動越慢；擺長越短，擺動越快。<br>
+        2. 擺錘重量不會影響擺動快慢。<br>
+        3. 擺角不大的時候，擺角幾乎不影響擺動快慢。<br>
+        4. 公平測試：一次只改變一個變因，其他條件保持相同，並且多測幾次。</div>
+      <button class="big" id="btnAgain">再玩一次</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var KEY='wg-pendulum-lab-';
+function load(k,d){try{var v=localStorage.getItem(KEY+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v));}catch(e){}}
+
+var $=function(id){return document.getElementById(id);};
+var VARS={len:{name:'擺長',unit:'公分'},mass:{name:'擺錘重量',unit:'公克'},ang:{name:'擺角',unit:'度'}};
+var LEN_CMP=[20,40,60,80,100],MASS=[50,100,200],ANG=[5,10,15];
+var LEN_FINE=[];for(var i=10;i<=150;i+=10)LEN_FINE.push(i);
+
+var ROUNDS=[
+  {type:'cmp',target:'len',answer:'yes',title:'擺長會影響擺動快慢嗎？',
+   text:'小華發現公園裡長長的鞦韆擺得比較慢。研究問題：「擺長（繩子長度）會不會影響擺錘擺動 10 次的時間？」',
+   explain:'擺長越長，擺動 10 次花的時間越多，所以擺長<b>會</b>影響擺動快慢。'},
+  {type:'cmp',target:'mass',answer:'no',title:'擺錘重量會影響嗎？',
+   text:'小美猜：「比較重的擺錘應該擺得比較快！」研究問題：「擺錘重量會不會影響擺動 10 次的時間？」',
+   explain:'不管擺錘輕或重，擺動 10 次的時間都差不多，差一點點只是測量誤差，所以重量<b>不會</b>影響擺動快慢。'},
+  {type:'cmp',target:'ang',answer:'no',title:'擺角會影響嗎？',
+   text:'研究問題：「把擺錘拉得比較高再放手（擺角變大），擺動 10 次的時間會不會改變？」差別如果很小，要怎麼確定呢？',
+   explain:'擺角不大時（本遊戲 5°～15°），兩邊的時間只差零點幾秒，跟測量誤差差不多，所以擺角<b>幾乎不</b>影響擺動快慢。擺角很大時才會稍微變慢喔。'},
+  {type:'det',title:'實驗偵探：誰的實驗公平？',
+   text:'小明想知道「擺錘重量會不會影響擺動快慢」。三位同學設計了不同的實驗，哪一個才是公平測試？'},
+  {type:'goal',title:'終極挑戰：做出 2 秒擺錘',
+   text:'老師想做一個「來回一次剛好 2 秒」的擺錘當節拍器。請只用擺錘 A，調整設定，讓擺動 10 次的時間落在 <b>19.5～20.5 秒</b>之間。可以回想前面的發現喔！'}
+];
+var DET_OPTS=[
+  {id:'fair',a:{len:60,mass:50,ang:10},b:{len:60,mass:200,ang:10},ok:true,
+   why:'只有重量不同，擺長和擺角都一樣，這才是公平測試！'},
+  {id:'two',a:{len:60,mass:50,ang:10},b:{len:100,mass:200,ang:10},ok:false,
+   why:'擺長和重量同時改變了！就算時間不同，也分不出是哪一個造成的。'},
+  {id:'wrongvar',a:{len:60,mass:50,ang:5},b:{len:60,mass:50,ang:15},ok:false,
+   why:'這組改變的是擺角，重量根本沒變，回答不了「重量」的問題。'}
+];
+
+var st=load('state',null);
+function fresh(){return {round:0,stars:[0,0,0,0,0],done:[false,false,false,false,false]};}
+if(!st||!st.stars||st.stars.length!==5)st=fresh();
+var best=load('best',0);
+
+// ---------- 音效 ----------
+var muted=load('muted',true),actx=null;
+function updMute(){$('mute').textContent=muted?'🔇':'🔊';}
+updMute();
+$('mute').addEventListener('click',function(){muted=!muted;save('muted',muted);updMute();if(!muted)beep(660,.08);});
+function beep(f,d,type){
+  if(muted)return;
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(.12,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);
+    o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d+.02);
+  }catch(e){}
+}
+function chord(ok){if(ok){beep(523,.15);setTimeout(function(){beep(659,.15);},120);setTimeout(function(){beep(784,.25);},240);}else{beep(220,.3,'triangle');}}
+
+// ---------- 物理 ----------
+function period(p){ // 秒：單擺週期（含小擺角修正）
+  var L=p.len/100,th=p.ang*Math.PI/180;
+  return 2*Math.PI*Math.sqrt(L/9.8)*(1+th*th/16);
+}
+function gauss(){var u=1-Math.random(),v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function measure(p){var t=10*period(p)+gauss()*0.12;return Math.round(t*10)/10;}
+
+// ---------- 畫布 ----------
+var cv=$('cv'),cx=cv.getContext('2d'),CW=0,CH=0;
+function resize(){
+  var r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  if(!r.width)return;
+  CW=r.width;CH=r.height;cv.width=Math.round(CW*dpr);cv.height=Math.round(CH*dpr);
+  cx.setTransform(dpr,0,0,dpr,0,0);draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver)new ResizeObserver(resize).observe(cv);
+
+var cfg={A:{len:100,mass:100,ang:10},B:{len:100,mass:100,ang:10}};
+var anim=null; // {t, TA, TB, ...}
+function bobR(m){var s=Math.min(CW,CH)/360;return ({50:9,100:13,200:18}[m]||13)*Math.max(.8,s);}
+function drawPend(x0,y0,p,theta,col,label,count){
+  var maxL=curRound().type==='goal'?150:100;
+  var scale=(CH-y0-(CW<560?52:34))/maxL;
+  var L=p.len*scale,r=bobR(p.mass);
+  // 垂直參考線
+  cx.setLineDash([4,5]);cx.strokeStyle='#b9c8d8';cx.lineWidth=1.5;
+  cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x0,y0+L+r+6);cx.stroke();cx.setLineDash([]);
+  // 擺角弧線（靜止時）
+  if(!anim){
+    cx.strokeStyle=col;cx.globalAlpha=.35;cx.lineWidth=2;
+    cx.beginPath();cx.arc(x0,y0,Math.min(40,L*.5),Math.PI/2,Math.PI/2-p.ang*Math.PI/180,true);cx.stroke();cx.globalAlpha=1;
+  }
+  var bx=x0+L*Math.sin(theta),by=y0+L*Math.cos(theta);
+  cx.strokeStyle='#4a5868';cx.lineWidth=2;
+  cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(bx,by);cx.stroke();
+  var g=cx.createRadialGradient(bx-r*.35,by-r*.35,r*.2,bx,by,r);
+  g.addColorStop(0,'#fff');g.addColorStop(.35,col);g.addColorStop(1,col);
+  cx.fillStyle=g;cx.beginPath();cx.arc(bx,by,r,0,Math.PI*2);cx.fill();
+  cx.fillStyle='#fff';cx.font='bold '+Math.round(r*.9)+'px system-ui';cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillText(label,bx,by+1);
+  cx.fillStyle=col;cx.font='bold 16px system-ui';cx.textBaseline='alphabetic';
+  if(CW<560&&curRound().type!=='goal'){
+    cx.font='bold 15px system-ui';
+    cx.fillText(label+'：'+p.len+'cm',x0,CH-26);cx.fillText(p.mass+'g・'+p.ang+'°',x0,CH-8);
+  }else cx.fillText(label+'：'+p.len+'cm・'+p.mass+'g・'+p.ang+'°',x0,CH-10);
+  if(count!=null){cx.font='bold 18px system-ui';cx.fillText(count+' 次',x0,y0+26+ (x0<CW/2?0:0));}
+}
+function draw(){
+  if(!CW)return;
+  cx.clearRect(0,0,CW,CH);
+  var y0=22;
+  cx.fillStyle='#6d7f92';cx.fillRect(CW*.08,y0-8,CW*.84,8);
+  var R=curRound(),single=R.type==='goal',xs=single?[CW/2]:[CW*.3,CW*.72];
+  var keys=single?['A']:['A','B'];
+  keys.forEach(function(k,i){
+    var p=cfg[k],th=p.ang*Math.PI/180,cnt=null;
+    if(anim){
+      var T=anim['T'+k],t=Math.min(anim.t,10*T);
+      th=(p.ang*Math.PI/180)*Math.cos(2*Math.PI*t/T);
+      cnt=Math.min(10,Math.floor(anim.t/T+1e-6));
+    }
+    cx.fillStyle='#4a5868';cx.beginPath();cx.arc(xs[i],y0,5,0,Math.PI*2);cx.fill();
+    drawPend(xs[i],y0,p,th,k==='A'?'#e0703a':'#2f7fd0',k,cnt);
+  });
+}
+
+// ---------- 遊戲流程 ----------
+var R=null,trials=[],unfairRuns=0,concluded=false,detTries=0,goalRuns=0;
+function curRound(){return ROUNDS[st.round]||ROUNDS[0];}
+function show(id){['sStart','sGame','sEnd'].forEach(function(s){$(s).classList.toggle('on',s===id);});window.scrollTo(0,0);}
+function starStr(n){return '⭐'.repeat(n)+'☆'.repeat(3-n);}
+function renderProg(){
+  var h='';for(var i=0;i<5;i++){h+='<span class="'+(st.done[i]?'done':(i===st.round?'cur':''))+'">'+(i+1)+'</span>';}
+  $('prog').innerHTML=h;
+  var tot=st.stars.reduce(function(a,b){return a+Math.max(0,b);},0);
+  $('info').textContent='第 '+(st.round+1)+' / 5 關・⭐ '+tot;
+}
+function initStart(){
+  var any=st.round>0||st.done[0];
+  $('btnStart').textContent=any?'繼續第 '+(st.round+1)+' 關':'開始實驗';
+  $('btnReset').classList.toggle('hidden',!any);
+  show('sStart');
+}
+$('btnStart').addEventListener('click',function(){beep(523,.08);startRound();});
+$('btnReset').addEventListener('click',function(){st=fresh();save('state',st);startRound();});
+$('btnAgain').addEventListener('click',function(){st=fresh();save('state',st);startRound();});
+
+function startRound(){
+  R=curRound();trials=[];unfairRuns=0;concluded=false;detTries=0;goalRuns=0;anim=null;
+  $('qtag').textContent='第 '+(st.round+1)+' 關・'+(R.type==='cmp'?'公平測試':R.type==='det'?'實驗偵探':'應用挑戰');
+  $('qtitle').textContent=R.title;$('qtext').innerHTML=R.text;
+  $('fbBox').innerHTML='';$('conclBox').innerHTML='';
+  $('labCard').classList.toggle('hidden',R.type==='det');
+  $('detCard').classList.toggle('hidden',R.type!=='det');
+  if(R.type==='cmp'){cfg.A={len:60,mass:100,ang:10};cfg.B={len:60,mass:100,ang:10};}
+  else if(R.type==='goal'){cfg.A={len:50,mass:100,ang:10};}
+  else {cfg.A=DET_OPTS[0].a;cfg.B=DET_OPTS[0].b;}
+  $('watch').innerHTML=R.type==='det'?'<span>比一比 A 和 B，哪些條件不一樣？</span>':'<span>按「開始實驗」開始計時</span>';
+  renderPanels();renderLog();renderProg();
+  if(R.type==='det')renderDet();
+  show('sGame');resize();
+}
+
+function optsFor(v){return v==='len'?(R.type==='goal'?LEN_FINE:LEN_CMP):v==='mass'?MASS:ANG;}
+function renderPanels(){
+  if(R.type==='det')return;
+  var keys=R.type==='goal'?['A']:['A','B'];
+  $('panels').className='panels'+(keys.length===1?' one':'');
+  var h='';
+  keys.forEach(function(k){
+    h+='<div class="pnl '+k+'"><h3>擺錘 '+k+'</h3>';
+    ['len','mass','ang'].forEach(function(v){
+      var diff=keys.length===2&&cfg.A[v]!==cfg.B[v];
+      h+='<div class="row"><div class="lb"><span>'+VARS[v].name+'</span>'+(diff&&k==='B'?'<span class="diff">不同</span>':'')+'</div>'+
+        '<div class="step"><button data-k="'+k+'" data-v="'+v+'" data-d="-1" aria-label="減少">−</button>'+
+        '<span class="v'+(diff?' changed':'')+'">'+cfg[k][v]+' '+(v==='len'?'cm':v==='mass'?'g':'°')+'</span>'+
+        '<button data-k="'+k+'" data-v="'+v+'" data-d="1" aria-label="增加">+</button></div></div>';
+    });
+    h+='</div>';
+  });
+  $('panels').innerHTML=h;
+  var lock=!!anim||concluded;
+  Array.prototype.forEach.call($('panels').querySelectorAll('button'),function(b){
+    b.disabled=lock;
+    b.addEventListener('click',function(){
+      var k=b.dataset.k,v=b.dataset.v,d=+b.dataset.d,arr=optsFor(v);
+      var i=arr.indexOf(cfg[k][v]);if(i<0)i=0;
+      i=Math.max(0,Math.min(arr.length-1,i+d));
+      var np={len:cfg[k].len,mass:cfg[k].mass,ang:cfg[k].ang};np[v]=arr[i];cfg[k]=np;
+      beep(440+i*40,.05);renderPanels();draw();
+    });
+  });
+  $('btnRun').disabled=lock;
+}
+
+function diffs(){return ['len','mass','ang'].filter(function(v){return cfg.A[v]!==cfg.B[v];});}
+
+$('btnRun').addEventListener('click',run);
+document.addEventListener('keydown',function(e){if(e.code==='Space'&&$('sGame').classList.contains('on')&&!$('btnRun').disabled&&R.type!=='det'){e.preventDefault();run();}});
+
+function run(){
+  if(anim||concluded)return;
+  if(R.type==='cmp'){
+    var d=diffs();
+    if(d.length===0){fb('tip','🤔 A 和 B 設定一模一樣，這樣看不出「'+VARS[R.target].name+'」有沒有影響喔！先把 B 的'+VARS[R.target].name+'改得和 A 不一樣。');return;}
+  }
+  $('fbBox').innerHTML='';
+  var a=JSON.parse(JSON.stringify(cfg.A)),b=JSON.parse(JSON.stringify(cfg.B));
+  var TA=period(a),TB=period(b);
+  var total=R.type==='goal'?10*TA:Math.max(10*TA,10*TB);
+  var speed=Math.max(1,total/5);
+  anim={t:0,TA:TA,TB:TB,total:total,speed:speed,last:performance.now(),cA:0,cB:0};
+  renderPanels();
+  var res={a:a,b:b,ta:measure(a),tb:R.type==='goal'?null:measure(b)};
+  function step(now){
+    var dt=Math.min(.05,(now-anim.last)/1000);anim.last=now;anim.t+=dt*speed;
+    var cA=Math.min(10,Math.floor(anim.t/TA)),cB=Math.min(10,Math.floor(anim.t/TB));
+    if(cA>anim.cA){anim.cA=cA;beep(700,.04);}
+    if(R.type!=='goal'&&cB>anim.cB){anim.cB=cB;beep(520,.04);}
+    var h='<span>⏱️ '+anim.t.toFixed(1)+' 秒</span><span class="a">A：'+(cA>=10?res.ta.toFixed(1)+' 秒 ✔':cA+' 次')+'</span>';
+    if(R.type!=='goal')h+='<span class="b">B：'+(cB>=10?res.tb.toFixed(1)+' 秒 ✔':cB+' 次')+'</span>';
+    $('watch').innerHTML=h;
+    draw();
+    if(anim.t>=total){anim=null;finish(res);}else requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function finish(res){
+  var fin=R.type==='goal'?res.ta:Math.max(res.ta,res.tb);
+  var wh='<span>⏱️ '+fin.toFixed(1)+' 秒</span><span class="a">A：'+res.ta.toFixed(1)+' 秒 ✔</span>'+(R.type==='goal'?'':'<span class="b">B：'+res.tb.toFixed(1)+' 秒 ✔</span>');
+  $('watch').innerHTML=wh;
+  if(R.type==='cmp'){
+    var d=['len','mass','ang'].filter(function(v){return res.a[v]!==res.b[v];});
+    res.fair=d.length===1&&d[0]===R.target;
+    res.note=res.fair?'公平':(d.indexOf(R.target)<0?'沒改到':'改太多');
+    if(!res.fair)unfairRuns++;
+    trials.push(res);
+    if(!res.fair){
+      if(d.indexOf(R.target)<0)fb('bad','⚠️ 這次改的是「'+d.map(function(v){return VARS[v].name;}).join('、')+'」，不是我們要研究的「'+VARS[R.target].name+'」。');
+      else fb('bad','⚠️ 這次同時改了 '+d.map(function(v){return '「'+VARS[v].name+'」';}).join('和')+'，就算時間不同，也不知道是誰造成的。只改「'+VARS[R.target].name+'」，其他都設成一樣吧！');
+    }else{
+      var fairN=trials.filter(function(t){return t.fair;}).length;
+      if(fairN===1)fb('tip','👍 公平測試！測量難免有誤差，可以<b>再做一次</b>（也可以換別的數值）確認，再寫結論。');
+    }
+    renderLog();renderConcl();
+  }else if(R.type==='goal'){
+    goalRuns++;trials.push(res);renderLog();
+    var t=res.ta;
+    if(Math.abs(t-20)<=0.5){
+      var s=goalRuns<=3?3:goalRuns<=5?2:1;
+      complete(s,'🎉 擺動 10 次花了 '+t.toFixed(1)+' 秒，來回一次大約 2 秒！擺長 '+res.a.len+' 公分就是答案。你用了 '+goalRuns+' 次實驗。'+(res.a.mass!==100||res.a.ang!==10?'（重量和擺角不影響，改不改都可以喔）':''));
+    }else{
+      var hint=t<20?'太快了（時間太短），試試把擺長調<b>長</b>一點。':'太慢了（時間太長），試試把擺長調<b>短</b>一點。';
+      if(trials.length>=2){var p=trials[trials.length-2].a,q=res.a;if(p.len===q.len&&(p.mass!==q.mass||p.ang!==q.ang))hint+=' 記得：重量和擺角幾乎不會改變快慢喔！';}
+      fb('tip','⏱️ '+t.toFixed(1)+' 秒，'+hint);
+    }
+  }
+  renderPanels();draw();
+}
+
+function renderLog(){
+  if(!trials.length){$('log').innerHTML='<div class="empty">📋 實驗紀錄會出現在這裡</div>';return;}
+  var h='<table><tr><th>#</th><th>A 的設定 → 時間</th>'+(R.type==='goal'?'':'<th>B 的設定 → 時間</th><th>檢查</th>')+'</tr>';
+  trials.forEach(function(t,i){
+    var fa=t.a.len+'cm・'+t.a.mass+'g・'+t.a.ang+'°<br>→ '+t.ta.toFixed(1)+' 秒';
+    h+='<tr><td>'+(i+1)+'</td><td class="a">'+fa+'</td>';
+    if(R.type!=='goal')h+='<td class="b">'+t.b.len+'cm・'+t.b.mass+'g・'+t.b.ang+'°<br>→ '+t.tb.toFixed(1)+' 秒</td><td>'+(t.fair?'✅':'⚠️')+'<br>'+t.note+'</td>';
+    h+='</tr>';
+  });
+  $('log').innerHTML=h+'</table>';
+}
+
+function renderConcl(){
+  if(concluded)return;
+  var fair=trials.filter(function(t){return t.fair;});
+  if(!fair.length){$('conclBox').innerHTML='';return;}
+  var n=VARS[R.target].name;
+  $('conclBox').innerHTML='<div class="fb tip" style="margin-top:10px"><b>✍️ 我的結論：</b>根據公平的實驗數據……</div><div class="concl">'+
+    '<button data-c="yes">📈 「'+n+'」<b>會</b>影響擺動快慢</button>'+
+    '<button data-c="no">➖ 「'+n+'」<b>不會</b>影響（時間差很少，只是誤差）</button></div>';
+  Array.prototype.forEach.call($('conclBox').querySelectorAll('button'),function(b){
+    b.addEventListener('click',function(){conclude(b.dataset.c);});
+  });
+}
+function conclude(c){
+  if(anim)return;
+  var fairN=trials.filter(function(t){return t.fair;}).length;
+  var right=c===R.answer;
+  if(!right){
+    st.stars[st.round]=-1; // 標記答錯過
+    fb('bad','🤔 再看看數據：比較每一次 A 和 B 的時間，差很多（好幾秒）還是差很少（零點幾秒）？'+(fairN<2?' 多做一次實驗也許會更清楚。':''));
+    beep(220,.25,'triangle');
+    renderConcl();
+    trials.wrong=(trials.wrong||0)+1;
+    return;
+  }
+  var s=0,parts=[];
+  if(!(trials.wrong>0)){s++;parts.push('⭐ 結論正確');}else parts.push('☆ 結論修正後才正確');
+  if(unfairRuns===0){s++;parts.push('⭐ 每次都是公平測試');}else parts.push('☆ 有 '+unfairRuns+' 次實驗不公平');
+  if(fairN>=2){s++;parts.push('⭐ 重複實驗 '+fairN+' 次');}else parts.push('☆ 只做 1 次公平實驗（多做幾次更可靠）');
+  complete(s,R.explain+'<br>'+parts.join('<br>'));
+}
+
+function complete(s,msg){
+  concluded=true;
+  st.stars[st.round]=s;st.done[st.round]=true;save('state',st);
+  chord(true);
+  $('conclBox').innerHTML='';
+  var last=st.round>=4;
+  fb('good','<div class="stars">'+starStr(s)+'</div>'+msg+'<button class="big" id="btnNext">'+(last?'看實驗報告 📄':'下一關 →')+'</button>',true);
+  $('btnNext').addEventListener('click',next);
+  if(R.type==='det')$('detCard').insertAdjacentHTML('beforeend','');
+  renderPanels();renderProg();
+}
+function next(){
+  if(st.round>=4){endGame();return;}
+  st.round++;save('state',st);startRound();
+}
+
+function fb(kind,html,toDet){
+  var box=R.type==='det'?$('detFb'):$('fbBox');
+  if(box)box.innerHTML='<div class="fb '+kind+'">'+html+'</div>';
+}
+
+function renderDet(){
+  var order=DET_OPTS.slice().sort(function(){return Math.random()-.5;});
+  var names=['小安','小宇','小晴'];
+  var h='<h2>🔍 選出公平的實驗</h2><p style="color:var(--sub)">點選你認為公平的那一組，上方會顯示他們的擺錘。</p>';
+  order.forEach(function(o,i){
+    h+='<button class="opt" data-id="'+o.id+'">🧑‍🔬 '+names[i]+'的設計'+
+      '<small>A：'+o.a.len+'cm・'+o.a.mass+'g・'+o.a.ang+'°　｜　B：'+o.b.len+'cm・'+o.b.mass+'g・'+o.b.ang+'°</small></button>';
+  });
+  h+='<div id="detFb"></div>';
+  $('detCard').innerHTML=h;
+  cfg.A=order[0].a;cfg.B=order[0].b;draw();
+  Array.prototype.forEach.call($('detCard').querySelectorAll('.opt'),function(b){
+    b.addEventListener('click',function(){
+      if(concluded||b.classList.contains('wrong'))return;
+      var o=DET_OPTS.filter(function(x){return x.id===b.dataset.id;})[0];
+      cfg.A=o.a;cfg.B=o.b;draw();
+      detTries++;
+      if(o.ok){
+        b.classList.add('right');
+        complete(Math.max(1,4-detTries),'✅ '+o.why+'<br>公平測試的關鍵：<b>一次只改變一個變因</b>（操縱變因），其他條件都保持一樣（控制變因），再觀察結果（應變變因）。');
+      }else{
+        b.classList.add('wrong');beep(220,.25,'triangle');
+        fb('bad','❌ '+o.why+' 再找找看！');
+      }
+    });
+  });
+}
+
+function endGame(){
+  var tot=st.stars.reduce(function(a,b){return a+Math.max(0,b);},0);
+  if(tot>best){best=tot;save('best',best);}
+  var msg=tot>=14?'太厲害了！你是嚴謹的小科學家 🧪':tot>=10?'很棒！你已經掌握公平測試的方法 👍':'完成了！再玩一次，試試每次都公平、多做幾次實驗 💪';
+  $('endMsg').textContent=msg+'（最高紀錄 '+best+' / 15 顆星）';
+  $('endStars').textContent='⭐ '+tot+' / 15';
+  var names=['擺長','擺錘重量','擺角','實驗偵探','2 秒擺錘'];
+  $('endList').innerHTML=names.map(function(n,i){return '<li><span>第 '+(i+1)+' 關・'+n+'</span><span>'+starStr(Math.max(0,st.stars[i]))+'</span></li>';}).join('');
+  $('info').textContent='⏱️ 擺錘實驗室';
+  chord(true);
+  st=fresh();save('state',st);
+  show('sEnd');
+}
+
+initStart();
+})();
+</script>
+</body>
+</html>

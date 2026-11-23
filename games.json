@@ -1,6 +1,28 @@
 {
   "games": [
     {
+      "id": "pendulum-lab",
+      "title": "擺錘實驗室：公平測試大挑戰",
+      "emoji": "⏱️",
+      "category": "special",
+      "sub": "研究",
+      "grade": "3–6 年級",
+      "minutes": 12,
+      "players": "單人",
+      "mechanic": "實驗沙盒",
+      "date": "2026-11-23",
+      "desc": "調整擺長、重量與擺角做擺錘實驗，練習「一次只改一個變因」的公平測試、重複測量與判讀數據寫結論，還要當偵探挑出不公平的實驗，最後做出 2 秒擺錘。",
+      "tags": [
+        "獨立研究",
+        "變因控制",
+        "公平測試",
+        "重複實驗",
+        "資料判讀",
+        "單擺"
+      ],
+      "path": "games/special/pendulum-lab/"
+    },
+    {
       "id": "kaohsiung-lrt-driver",
       "title": "高雄輕軌：水岸駕駛員",
       "emoji": "🚋",

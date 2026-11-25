@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>方位小隊長：藍鯨島尋寶記</title>
+<style>
+:root{
+  --bg:#eef6f8;--card:#fff;--ink:#1f3440;--sub:#5d7480;--line:#cfe0e6;
+  --accent:#e07a2f;--accent2:#2a8a8a;--grass:#e4f2d8;--grass2:#d6ebc6;--ok:#2e9a5c;--bad:#d2473a;--path:#e07a2f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:17px;line-height:1.5;touch-action:manipulation;-webkit-user-select:none;user-select:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font:inherit;color:inherit;border:none;cursor:pointer;touch-action:manipulation}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--line)}
+.top a{color:var(--accent2);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center;padding:0 4px;white-space:nowrap}
+.top .info{font-weight:700;color:var(--sub);font-size:16px;text-align:center;flex:1;line-height:1.25}
+.iconbtn{min-width:44px;min-height:44px;border-radius:12px;background:var(--card);border:2px solid var(--line);font-size:20px}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 12px 24px}
+.screen{display:none}.screen.on{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:clamp(14px,3vw,24px);margin-bottom:12px}
+h1{font-size:clamp(26px,6vw,38px);line-height:1.25;margin-bottom:6px}
+h2{font-size:clamp(20px,4.5vw,26px);margin-bottom:6px}
+.goal{color:var(--sub);margin-bottom:10px}
+.how{list-style:none;display:grid;gap:10px;margin:12px 0 16px}
+.how li{display:flex;gap:10px;align-items:flex-start}
+.how li span:first-child{font-size:26px;line-height:1.2;flex:0 0 34px;text-align:center}
+.big{display:block;width:100%;min-height:56px;border-radius:16px;background:var(--accent);color:#fff;font-size:20px;font-weight:800;box-shadow:0 4px 0 #a9561c}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #a9561c}
+.big.alt{background:var(--accent2);box-shadow:0 4px 0 #1c6464}
+.ghost{background:transparent;color:var(--accent2);font-weight:700;min-height:44px;margin-top:8px;width:100%}
+.lvrow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 14px}
+.lv{min-height:64px;border-radius:12px;background:#f3f8fa;border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;color:var(--sub);padding:4px}
+.lv b{font-size:16px;color:var(--ink)}
+.lv.lock{opacity:.45}
+.lv.cur{border-color:var(--accent)}
+/* play layout */
+.play{display:flex;flex-direction:column;gap:10px;align-items:center}
+@media (orientation:landscape) and (min-width:700px){.play{flex-direction:row;align-items:flex-start;justify-content:center}}
+.mapbox{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:8px}
+.mapbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;min-height:48px}
+.north{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--sub);font-size:16px}
+.north svg{width:46px;height:46px;transition:transform .6s}
+.scalebar{display:flex;flex-direction:column;align-items:flex-end;font-size:16px;color:var(--sub);font-weight:700}
+.scalebar i{display:block;height:8px;border:2px solid var(--ink);border-top:none;margin-top:2px}
+.grid{position:relative;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid #7fb0b8;border-radius:10px;overflow:hidden;background:var(--grass)}
+.cell{position:relative;aspect-ratio:1;border:1px solid rgba(80,120,90,.18);background:transparent;display:flex;align-items:center;justify-content:center;font-size:calc(var(--c) * .56);line-height:1;padding:0}
+.cell:nth-child(odd){background:rgba(255,255,255,.18)}
+.cell.tap:active{background:rgba(224,122,47,.25)}
+.cell .me{position:absolute;right:1px;bottom:1px;font-size:calc(var(--c) * .4)}
+.cell .mk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--c) * .55);pointer-events:none}
+.cell.start{box-shadow:inset 0 0 0 3px var(--accent)}
+.cell.shake{animation:shk .35s}
+@keyframes shk{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cell.glow{box-shadow:inset 0 0 0 3px var(--accent2);background:rgba(42,138,138,.15)}
+.pathsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.side{width:min(100%,440px);display:flex;flex-direction:column;gap:10px}
+.clue{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px 14px}
+.clue .qn{font-size:16px;color:var(--sub);font-weight:700}
+.clue .qt{font-size:clamp(18px,4.4vw,22px);font-weight:800;margin-top:2px}
+.clue .hint{font-size:16px;color:var(--sub);margin-top:4px}
+.fb{min-height:28px;font-weight:800;margin-top:6px}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+.rose{display:grid;grid-template-columns:repeat(3,minmax(64px,1fr));gap:6px;max-width:300px;margin:8px auto 0}
+.rose button{min-height:52px;border-radius:12px;background:#f1f7f9;border:2px solid var(--line);font-weight:800;font-size:18px}
+.rose button:active{background:#ffe9d6}
+.rose .mid{display:flex;align-items:center;justify-content:center;font-size:30px}
+.rose button.hide{visibility:hidden}
+.rose button.right{background:#dff3e6;border-color:var(--ok)}
+.rose button.wrong{background:#fbe1de;border-color:var(--bad)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.choices button{min-height:52px;border-radius:12px;background:#f1f7f9;border:2px solid var(--line);font-weight:800;font-size:18px}
+.choices button.right{background:#dff3e6;border-color:var(--ok)}
+.choices button.wrong{background:#fbe1de;border-color:var(--bad)}
+.legend{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:10px 12px}
+.legend h3{font-size:16px;color:var(--sub);margin-bottom:4px}
+.legend .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px 8px;font-size:16px}
+.legend .items span{white-space:nowrap}
+.next{display:none}.next.on{display:block}
+.overlay{position:fixed;inset:0;background:rgba(20,40,50,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.overlay.on{display:flex}
+.overlay .card{max-width:520px;width:100%;max-height:90vh;overflow:auto;margin:0}
+.tipbox{background:#fff7ec;border:2px dashed #f0c79c;border-radius:14px;padding:10px 12px;margin:10px 0 14px}
+.stars{font-size:40px;text-align:center;letter-spacing:4px;margin:8px 0}
+.coins{font-size:22px;letter-spacing:2px;text-align:center}
+.tbl{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:16px}
+.tbl td{padding:6px 4px;border-bottom:1px solid var(--line)}
+.tbl td:last-child{text-align:right}
+.mini{display:inline-block;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="../../../">← 遊戲目錄</a>
+  <div class="info" id="info">🧭 方位小隊長</div>
+  <button class="iconbtn" id="muteBtn" aria-label="音效開關">🔇</button>
+</div>
+<div class="wrap">
+  <!-- start -->
+  <section class="screen on" id="sStart">
+    <div class="card">
+      <h1>🧭 方位小隊長：藍鯨島尋寶記</h1>
+      <p class="goal">看懂指北針、比例尺和圖例，帶著探險隊在藍鯨島上找到寶藏！</p>
+      <ul class="how">
+        <li><span>🧒</span><span>你是探險隊長，從地圖上的地點出發。</span></li>
+        <li><span>👆</span><span>依照線索「往哪個方位走多遠」，點出終點那一格。</span></li>
+        <li><span>🧭</span><span>有些題目要判斷「A 在 B 的哪個方位」，點方位盤作答。</span></li>
+        <li><span>📏</span><span>比例尺告訴你地圖上 1 格代表實際幾公尺。</span></li>
+        <li><span>⭐</span><span>共 5 關，一次答對得 100 分，第二次答對得 50 分。</span></li>
+      </ul>
+      <div style="font-weight:700;color:var(--sub)">關卡進度</div>
+      <div class="lvrow" id="lvRow"></div>
+      <button class="big" id="startBtn">開始探險</button>
+      <button class="ghost" id="resetBtn">清除進度，從第 1 關重新開始</button>
+    </div>
+  </section>
+  <!-- play -->
+  <section class="screen" id="sPlay">
+    <div class="play">
+      <div class="mapbox">
+        <div class="mapbar">
+          <div class="north"><svg viewBox="0 0 50 50" id="northSvg"><circle cx="25" cy="25" r="23" fill="#fff" stroke="#7fb0b8" stroke-width="2"/><polygon points="25,4 32,27 25,23 18,27" fill="#d2473a"/><polygon points="25,46 32,23 25,27 18,23" fill="#9fb4bb"/><text x="25" y="17" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">北</text></svg><span>指北針</span></div>
+          <div class="scalebar" id="scaleBar"><span id="scaleTxt"></span><i id="scaleLine"></i></div>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="side">
+        <div class="clue">
+          <div class="qn" id="qn"></div>
+          <div class="qt" id="qt"></div>
+          <div class="hint" id="qh"></div>
+          <div id="ansArea"></div>
+          <div class="fb" id="fb"></div>
+          <button class="big alt next" id="nextBtn">下一題 ➜</button>
+        </div>
+        <div class="legend"><h3>圖例</h3><div class="items" id="legend"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="overlay" id="ov"><div class="card" id="ovCard"></div></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='wg-compass-map-quest-';
+function load(k,d){try{var v=localStorage.getItem(KEY+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v));}catch(e){}}
+function del(k){try{localStorage.removeItem(KEY+k);}catch(e){}}
+
+var N=8;
+var DIRS=[{n:'北',a:0},{n:'東北',a:45},{n:'東',a:90},{n:'東南',a:135},{n:'南',a:180},{n:'西南',a:225},{n:'西',a:270},{n:'西北',a:315}];
+var PLACES=[['學校','🏫'],['郵局','📮'],['醫院','🏥'],['廟宇','🛕'],['公園','🌳'],['港口','⚓'],['車站','🚉'],['圖書館','📚'],['消防局','🚒'],['警察局','🚓'],['果園','🍊'],['體育館','🏟️'],['市場','🥬'],['燈塔','💡']];
+var LEVELS=[
+  {name:'四方位',scale:0,rot:0,showEmoji:true,dirs:[0,2,4,6],plan:['walk1','dir','walk1','dir'],
+   tip:'指北針朝上時：<b>上北、下南、左西、右東</b>。往東走 2 格，就是往右數 2 格。'},
+  {name:'八方位',scale:0,rot:0,showEmoji:true,dirs:[0,1,2,3,4,5,6,7],plan:['walk1','dir','walk1','dir'],
+   tip:'北和東的中間叫<b>東北</b>，南和西的中間叫<b>西南</b>（先說東西，再說南北）。往東北走 1 格，就是往右上斜角走 1 格。'},
+  {name:'比例尺',scale:1,rot:0,showEmoji:true,dirs:[0,1,2,3,4,5,6,7],plan:['walk2','dist','walk2','dir'],
+   tip:'看右上角的<b>比例尺</b>：一小段線代表地圖上 1 格的長度，等於實際的幾公尺。走 600 公尺、1 格 200 公尺，就要走 600 ÷ 200 = 3 格。'},
+  {name:'看圖例',scale:1,rot:0,showEmoji:false,dirs:[0,1,2,3,4,5,6,7],plan:['walk2','dir','dist','walk2'],
+   tip:'這一關的線索只寫地名，不畫符號。地圖用<b>符號</b>代表地物，請看<b>圖例</b>找出「郵局」是哪個符號。'},
+  {name:'轉向地圖',scale:1,rot:-1,showEmoji:false,dirs:[0,1,2,3,4,5,6,7],plan:['walk1m','dir','walk2','dir'],
+   tip:'地圖的上方<b>不一定是北方</b>！先看指北針的紅色箭頭指向哪裡，那邊才是北。可以把平板轉一轉，讓紅箭頭朝上再想。'}
+];
+var SCALES=[100,200,250,500];
+
+function rnd(n){return Math.floor(Math.random()*n);}
+function pick(a){return a[rnd(a.length)];}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+// direction <-> screen vector
+function vec(di,rot){var ang=(DIRS[di].a+rot)*Math.PI/180;return [Math.round(Math.sin(ang)),-Math.round(Math.cos(ang))];}
+function dirOf(dx,dy,rot){
+  var sx=Math.sign(dx),sy=Math.sign(dy);
+  for(var i=0;i<8;i++){var v=vec(i,rot);if(v[0]===sx&&v[1]===sy)return i;}
+  return -1;
+}
+function aligned(a,b){var dx=b.x-a.x,dy=b.y-a.y;return (dx||dy)&&(dx===0||dy===0||Math.abs(dx)===Math.abs(dy));}
+function cardinalDir(di){return di%2===0;}
+
+// ===== state =====
+var prog=load('prog',{unlocked:0,best:[0,0,0,0,0],scores:[0,0,0,0,0]});
+var S=null; // current level state
+var muted=true,actx=null;
+
+function genMap(L){
+  for(var tries=0;tries<400;tries++){
+    var pool=shuffle(PLACES.slice()).slice(0,8),lm=[],ok=true;
+    for(var i=0;i<pool.length&&ok;i++){
+      var placed=false;
+      for(var t=0;t<60;t++){
+        var x=rnd(N),y=rnd(N),bad=false;
+        for(var j=0;j<lm.length;j++){if(Math.max(Math.abs(lm[j].x-x),Math.abs(lm[j].y-y))<2){bad=true;break;}}
+        if(!bad){lm.push({x:x,y:y,name:pool[i][0],e:pool[i][1]});placed=true;break;}
+      }
+      if(!placed)ok=false;
+    }
+    if(!ok)continue;
+    var pairs=0;
+    for(i=0;i<lm.length;i++)for(j=0;j<lm.length;j++){if(i!==j&&aligned(lm[i],lm[j])){
+      var di=dirOf(lm[j].x-lm[i].x,lm[j].y-lm[i].y,L.rotv);
+      if(L.dirs.indexOf(di)>=0)pairs++;}}
+    if(pairs>=6)return lm;
+  }
+  return lm;
+}
+function nm(L,p){return L.showEmoji?(p.e+p.name):('「'+p.name+'」');}
+function inside(x,y){return x>=0&&y>=0&&x<N&&y<N;}
+
+function makeQ(type,L,lm,used){
+  for(var t=0;t<300;t++){
+    var q=null;
+    if(type==='dir'){
+      var a=pick(lm),b=pick(lm);
+      if(a===b||!aligned(a,b))continue;
+      var di=dirOf(b.x-a.x,b.y-a.y,L.rotv);
+      if(L.dirs.indexOf(di)<0)continue;
+      var key='d'+a.name+b.name;if(used[key])continue;used[key]=1;
+      q={type:'dir',ans:di,a:lm.indexOf(a),b:lm.indexOf(b),
+         text:nm(L,b)+'在'+nm(L,a)+'的哪個方位？',hint:'從'+a.name+'看過去，'+b.name+'在哪一邊？點方位盤作答。'};
+    }else if(type==='dist'){
+      a=pick(lm);b=pick(lm);
+      if(a===b)continue;
+      var dx=b.x-a.x,dy=b.y-a.y;
+      if(dx!==0&&dy!==0)continue;
+      var k=Math.abs(dx+dy);if(k<2)continue;
+      key='m'+a.name+b.name;if(used[key])continue;used[key]=1;
+      var ans=k*L.sc,set={};set[ans]=1;var opts=[ans];
+      var cand=shuffle([(k-1)*L.sc,(k+1)*L.sc,k*100===ans?k*250:k*100,ans*2,k,(k+2)*L.sc]);
+      for(var c=0;c<cand.length&&opts.length<4;c++){if(cand[c]>0&&!set[cand[c]]){set[cand[c]]=1;opts.push(cand[c]);}}
+      q={type:'dist',ans:ans,opts:shuffle(opts),a:lm.indexOf(a),b:lm.indexOf(b),
+         text:'從'+nm(L,a)+'直直走到'+nm(L,b)+'，實際距離是多少公尺？',hint:'先數地圖上隔幾格，再乘上比例尺。'};
+    }else{ // walk
+      var legsN=(type==='walk2')?2:1, meters=L.sc>0;
+      var s=pick(lm),x=s.x,y=s.y,legs=[],pts=[[s.x,s.y]],okw=true,last=-1;
+      for(var g=0;g<legsN;g++){
+        var choices=L.dirs.filter(function(d){return (meters?cardinalDir(d):true)&&d!==last&&(last<0||Math.abs(d-last)!==4);});
+        var d=pick(choices),kk=1+rnd(meters?4:3),v=vec(d,L.rotv);
+        var nx=x+v[0]*kk,ny=y+v[1]*kk;
+        if(!inside(nx,ny)){okw=false;break;}
+        legs.push({d:d,k:kk});x=nx;y=ny;pts.push([x,y]);last=d;
+      }
+      if(!okw||(x===s.x&&y===s.y))continue;
+      key='w'+s.name+x+','+y;if(used[key])continue;used[key]=1;
+      var parts=legs.map(function(l){return '往<b>'+DIRS[l.d].n+'</b>走 '+(meters?(l.k*L.sc+' 公尺'):(l.k+' 格'));});
+      q={type:'walk',s:lm.indexOf(s),tx:x,ty:y,pts:pts,
+         text:'從'+nm(L,s)+'出發，先'+parts.join('，再')+'。寶藏在哪一格？',
+         hint:meters?'比例尺：1 格 = '+L.sc+' 公尺。點地圖上的終點格子。':'點地圖上的終點格子。'};
+    }
+    return q;
+  }
+  return null;
+}
+
+function newLevel(li){
+  var base=LEVELS[li];
+  var L={li:li,rotv:base.rot<0?pick([90,180,270]):0,sc:base.scale?pick(SCALES):0,showEmoji:base.showEmoji,dirs:base.dirs};
+  var lm=genMap(L),used={},qs=[];
+  base.plan.forEach(function(tp){
+    if(tp==='walk1m')tp='walk1';
+    var q=makeQ(tp,L,lm,used)||makeQ('walk1',L,lm,used);
+    if(q)qs.push(q);
+  });
+  S={li:li,L:L,lm:lm,qs:qs,qi:0,score:0,tries:0,done:false,coins:[],firsts:0};
+  save('cur',S);
+}
+
+// ===== audio =====
+function tone(f,d,type,delay){
+  if(muted)return;
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    var t=actx.currentTime+(delay||0),o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(.18,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+.05);
+  }catch(e){}
+}
+function sOk(){tone(660,.15,'triangle');tone(880,.2,'triangle',.12);}
+function sBad(){tone(220,.25,'square');}
+function sWin(){[523,659,784,1047].forEach(function(f,i){tone(f,.22,'triangle',i*.13);});}
+var muteBtn=document.getElementById('muteBtn');
+muted=load('muted',true);muteBtn.textContent=muted?'🔇':'🔊';
+muteBtn.addEventListener('click',function(){muted=!muted;save('muted',muted);muteBtn.textContent=muted?'🔇':'🔊';if(!muted)tone(700,.1);});
+
+// ===== DOM =====
+var $=function(id){return document.getElementById(id);};
+var grid=$('grid'),cells=[];
+function show(id){['sStart','sPlay'].forEach(function(s){$(s).classList.toggle('on',s===id);});}
+function info(){
+  if(!S){$('info').textContent='🧭 方位小隊長';return;}
+  $('info').innerHTML='第 '+(S.li+1)+' 關・'+LEVELS[S.li].name+'<br>得分 '+S.score;
+}
+function layout(){
+  var w=window.innerWidth,h=window.innerHeight,land=w>h&&w>=700,m;
+  if(land)m=Math.min(w-470,h-130);else m=Math.min(w-44,h*0.46);
+  m=Math.max(8*38,Math.floor(m/8)*8);
+  if(m>8*80)m=8*80;
+  grid.style.width=m+'px';grid.style.setProperty('--c',(m/8)+'px');
+  $('scaleLine').style.width=(m/8)+'px';
+}
+window.addEventListener('resize',layout);
+
+function buildGrid(){
+  grid.innerHTML='';cells=[];
+  for(var i=0;i<N*N;i++){
+    var b=document.createElement('button');b.className='cell';b.dataset.i=i;
+    b.setAttribute('aria-label','第'+(Math.floor(i/N)+1)+'列第'+(i%N+1)+'格');
+    grid.appendChild(b);cells.push(b);
+  }
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 8 8');svg.setAttribute('class','pathsvg');svg.id='pathSvg';
+  grid.appendChild(svg);
+  grid.addEventListener('pointerup',onCell);
+}
+function renderMap(){
+  var L=S.L;
+  cells.forEach(function(c){c.innerHTML='';c.className='cell';});
+  S.lm.forEach(function(p){cells[p.y*N+p.x].innerHTML=p.e;cells[p.y*N+p.x].setAttribute('aria-label',p.name);});
+  S.coins.forEach(function(k){var c=cells[k];var s=document.createElement('span');s.className='mk';s.textContent='💰';c.appendChild(s);});
+  $('northSvg').style.transform='rotate('+L.rotv+'deg)';
+  if(L.sc){$('scaleBar').style.visibility='visible';$('scaleTxt').textContent='0 — '+L.sc+' 公尺';}
+  else{$('scaleBar').style.visibility='visible';$('scaleTxt').textContent='1 格';}
+  $('legend').innerHTML=S.lm.map(function(p){return '<span>'+p.e+' '+p.name+'</span>';}).join('');
+  $('pathSvg').innerHTML='';
+}
+function drawPath(pts,color){
+  var s=$('pathSvg'),d=pts.map(function(p){return (p[0]+.5)+','+(p[1]+.5);}).join(' ');
+  s.innerHTML='<polyline points="'+d+'" fill="none" stroke="'+(color||'#e07a2f')+'" stroke-width=".12" stroke-dasharray=".25 .15" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<circle cx="'+(pts[pts.length-1][0]+.5)+'" cy="'+(pts[pts.length-1][1]+.5)+'" r=".18" fill="'+(color||'#e07a2f')+'"/>';
+}
+function drawArrow(a,b,color){
+  var s=$('pathSvg');
+  s.innerHTML='<line x1="'+(a.x+.5)+'" y1="'+(a.y+.5)+'" x2="'+(b.x+.5)+'" y2="'+(b.y+.5)+'" stroke="'+color+'" stroke-width=".1" stroke-dasharray=".25 .15" stroke-linecap="round"/>'+
+    '<circle cx="'+(b.x+.5)+'" cy="'+(b.y+.5)+'" r=".42" fill="none" stroke="'+color+'" stroke-width=".08"/>';
+}
+
+function renderQ(){
+  var q=S.qs[S.qi],L=S.L;
+  renderMap();info();
+  $('qn').textContent='線索 '+(S.qi+1)+' / '+S.qs.length;
+  $('qt').innerHTML=q.text;$('qh').textContent=q.hint;
+  $('fb').textContent='';$('fb').className='fb';
+  $('nextBtn').classList.remove('on');
+  S.done=false;
+  var area=$('ansArea');area.innerHTML='';
+  if(q.type==='walk'){
+    var sc=cells[S.lm[q.s].y*N+S.lm[q.s].x];sc.classList.add('start');
+    var me=document.createElement('span');me.className='me';me.textContent='🧒';sc.appendChild(me);
+    cells.forEach(function(c){c.classList.add('tap');});
+  }else if(q.type==='dir'){
+    var A=S.lm[q.a],B=S.lm[q.b];
+    cells[A.y*N+A.x].classList.add('start');cells[B.y*N+B.x].classList.add('glow');
+    var order=[7,0,1,6,-1,2,5,4,3],r=document.createElement('div');r.className='rose';
+    order.forEach(function(di){
+      var b=document.createElement('button');
+      if(di<0){b.className='mid';b.textContent='🧭';b.disabled=true;b.setAttribute('aria-hidden','true');}
+      else{b.textContent=DIRS[di].n;b.dataset.d=di;if(L.dirs.indexOf(di)<0)b.classList.add('hide');}
+      r.appendChild(b);
+    });
+    r.addEventListener('click',onRose);area.appendChild(r);
+  }else{
+    A=S.lm[q.a];B=S.lm[q.b];
+    cells[A.y*N+A.x].classList.add('start');cells[B.y*N+B.x].classList.add('glow');
+    var ch=document.createElement('div');ch.className='choices';
+    q.opts.forEach(function(o){var b=document.createElement('button');b.textContent=o+' 公尺';b.dataset.v=o;ch.appendChild(b);});
+    ch.addEventListener('click',onChoice);area.appendChild(ch);
+  }
+}
+function award(){
+  var pts=S.tries===0?100:50;S.score+=pts;if(S.tries===0)S.firsts++;
+  info();return pts;
+}
+function finishQ(correct,msg){
+  S.done=true;
+  var fb=$('fb');fb.className='fb '+(correct?'ok':'bad');fb.innerHTML=msg;
+  $('nextBtn').classList.add('on');
+  $('nextBtn').textContent=S.qi<S.qs.length-1?'下一題 ➜':'看本關成績 ➜';
+  S.qi++;save('cur',S);S.qi--;
+}
+function wrongOnce(msg){
+  S.tries++;sBad();
+  var fb=$('fb');fb.className='fb bad';fb.innerHTML=msg;
+}
+function onCell(e){
+  var c=e.target.closest('.cell');if(!c||!S||S.done)return;
+  var q=S.qs[S.qi];if(q.type!=='walk')return;
+  var i=+c.dataset.i,x=i%N,y=Math.floor(i/N);
+  if(x===q.tx&&y===q.ty){
+    var p=award();sOk();
+    S.coins.push(i);
+    var s=document.createElement('span');s.className='mk';s.textContent='💰';c.appendChild(s);
+    drawPath(q.pts,'#2e9a5c');
+    finishQ(true,'答對了！找到寶藏 +'+p+' 分 🎉');
+  }else{
+    c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');
+    if(S.tries===0){wrongOnce('不是這格喔！'+walkHint(q)+'再試一次。');}
+    else{
+      S.tries++;sBad();
+      var tc=cells[q.ty*N+q.tx];tc.classList.add('glow');
+      drawPath(q.pts,'#e07a2f');
+      finishQ(false,'正確的終點在發亮的格子，跟著虛線走一遍看看。');
+    }
+  }
+}
+function walkHint(q){
+  if(S.L.rotv)return '先找到指北針的紅箭頭，那邊才是北。';
+  if(S.L.sc)return '公尺數 ÷ '+S.L.sc+' = 要走幾格。';
+  return '記得上北下南、左西右東。';
+}
+function onRose(e){
+  var b=e.target.closest('button');if(!b||b.disabled||b.dataset.d===undefined||S.done)return;
+  var q=S.qs[S.qi],d=+b.dataset.d,A=S.lm[q.a],B=S.lm[q.b];
+  if(d===q.ans){
+    b.classList.add('right');var p=award();sOk();drawArrow(A,B,'#2e9a5c');
+    finishQ(true,'沒錯！'+B.name+'在'+A.name+'的<b>'+DIRS[q.ans].n+'</b>方 +'+p+' 分');
+  }else if(S.tries===0){
+    b.classList.add('wrong');
+    wrongOnce('再想想！'+(S.L.rotv?'指北針的紅箭頭才是北方。':'站在'+A.name+'，往'+B.name+'看過去。'));
+  }else{
+    b.classList.add('wrong');S.tries++;sBad();
+    var rb=$('ansArea').querySelector('[data-d="'+q.ans+'"]');if(rb)rb.classList.add('right');
+    drawArrow(A,B,'#e07a2f');
+    finishQ(false,'答案是<b>'+DIRS[q.ans].n+'</b>。從'+A.name+'沿著虛線看向'+B.name+'。');
+  }
+}
+function onChoice(e){
+  var b=e.target.closest('button');if(!b||S.done||b.classList.contains('wrong'))return;
+  var q=S.qs[S.qi],v=+b.dataset.v,A=S.lm[q.a],B=S.lm[q.b],k=q.ans/S.L.sc;
+  if(v===q.ans){
+    b.classList.add('right');var p=award();sOk();drawArrow(A,B,'#2e9a5c');
+    finishQ(true,'正確！'+k+' 格 × '+S.L.sc+' 公尺 = '+q.ans+' 公尺 +'+p+' 分');
+  }else if(S.tries===0){b.classList.add('wrong');wrongOnce('不對喔，先數一數兩地隔幾格。');}
+  else{
+    b.classList.add('wrong');S.tries++;sBad();
+    var rb=$('ansArea').querySelector('[data-v="'+q.ans+'"]');if(rb)rb.classList.add('right');
+    drawArrow(A,B,'#e07a2f');
+    finishQ(false,'兩地相隔 '+k+' 格，'+k+' × '+S.L.sc+' = '+q.ans+' 公尺。');
+  }
+}
+$('nextBtn').addEventListener('click',function(){
+  S.qi++;S.tries=0;
+  if(S.qi>=S.qs.length){endLevel();return;}
+  save('cur',S);renderQ();
+});
+
+function starsOf(score,total){var r=score/(total*100);return r>=.9?3:r>=.6?2:r>0?1:0;}
+function starStr(n){return '⭐'.repeat(n)+'☆'.repeat(3-n);}
+function overlay(html){$('ovCard').innerHTML=html;$('ov').classList.add('on');}
+function closeOv(){$('ov').classList.remove('on');}
+
+function levelIntro(){
+  var lv=LEVELS[S.li],L=S.L;
+  var extra='';
+  if(L.sc)extra+='<p>📏 這一關的比例尺：地圖上 1 格 = 實際 <b>'+L.sc+' 公尺</b>。</p>';
+  if(L.rotv)extra+='<p>🧭 注意！這張地圖的北方在畫面的<b>'+({90:'右邊',180:'下面',270:'左邊'})[L.rotv]+'</b>。</p>';
+  overlay('<h2>第 '+(S.li+1)+' 關：'+lv.name+'</h2><div class="tipbox">💡 '+lv.tip+'</div>'+extra+
+    '<p style="margin:8px 0 14px;color:var(--sub)">共 '+S.qs.length+' 條線索，找出所有寶藏！</p><button class="big" id="goBtn">出發！</button>');
+  $('goBtn').onclick=function(){closeOv();renderQ();};
+}
+function endLevel(){
+  var total=S.qs.length,st=starsOf(S.score,total),li=S.li;
+  prog.best[li]=Math.max(prog.best[li]||0,st);
+  prog.scores[li]=Math.max(prog.scores[li]||0,S.score);
+  if(li+1>prog.unlocked&&li+1<LEVELS.length)prog.unlocked=li+1;
+  var allDone=li===LEVELS.length-1;
+  if(allDone)prog.cleared=true;
+  save('prog',prog);del('cur');
+  sWin();
+  var coins='';for(var i=0;i<S.coins.length;i++)coins+='💰';
+  var msg=st===3?'太厲害了，方位感一級棒！':st===2?'很不錯！再挑戰一次拿三顆星吧。':'多練習幾次，記住指北針和比例尺的用法！';
+  if(!allDone){
+    overlay('<h2>第 '+(li+1)+' 關完成！</h2><div class="stars">'+starStr(st)+'</div><div class="coins">'+(coins||'—')+'</div>'+
+      '<p style="text-align:center;margin:8px 0">本關得分 <b>'+S.score+'</b> / '+(total*100)+'，一次答對 '+S.firsts+' 題</p>'+
+      '<p style="text-align:center;color:var(--sub);margin-bottom:12px">'+msg+'</p>'+
+      '<button class="big" id="nxBtn">前往第 '+(li+2)+' 關</button><button class="ghost" id="rpBtn">重玩這一關</button><button class="ghost" id="hmBtn">回到開始畫面</button>');
+    $('nxBtn').onclick=function(){closeOv();startLevel(li+1);};
+  }else{
+    var rows='',sum=0,ss=0;
+    LEVELS.forEach(function(l,k){rows+='<tr><td>第 '+(k+1)+' 關 '+l.name+'</td><td>'+starStr(prog.best[k]||0)+'</td></tr>';sum+=prog.best[k]||0;ss+=prog.scores[k]||0;});
+    var title=sum>=13?'🏅 藍鯨島首席方位隊長':sum>=9?'🎖️ 方位小隊長':'🧭 見習探險家';
+    overlay('<h2>🎉 藍鯨島寶藏全部找到！</h2><p style="text-align:center;font-size:22px;font-weight:800;margin:6px 0">'+title+'</p>'+
+      '<p style="text-align:center;color:var(--sub)">最後一關得分 '+S.score+'，五關最佳星星共 '+sum+' / 15</p><table class="tbl">'+rows+'</table>'+
+      '<p style="color:var(--sub);margin-bottom:12px">挑戰看看：在學校地圖或高雄市地圖上，找出你家在學校的哪個方位？</p>'+
+      '<button class="big" id="nxBtn">再玩一次</button><button class="ghost" id="rpBtn">重玩第 5 關</button><button class="ghost" id="hmBtn">回到開始畫面</button>');
+    $('nxBtn').onclick=function(){closeOv();startLevel(0);};
+  }
+  $('rpBtn').onclick=function(){closeOv();startLevel(li);};
+  $('hmBtn').onclick=function(){closeOv();S=null;home();};
+}
+function startLevel(li){newLevel(li);show('sPlay');layout();levelIntro();info();renderMap();}
+
+function home(){
+  S=null;info();show('sStart');
+  var row=$('lvRow');row.innerHTML='';
+  var cur=load('cur',null);
+  LEVELS.forEach(function(l,k){
+    var d=document.createElement('div');d.className='lv'+(k>prog.unlocked?' lock':'')+(cur&&cur.li===k?' cur':'');
+    d.innerHTML='<b>'+(k>prog.unlocked?'🔒':'第'+(k+1)+'關')+'</b><span>'+l.name+'</span><span>'+starStr(prog.best[k]||0)+'</span>';
+    row.appendChild(d);
+  });
+  $('startBtn').textContent=cur?'繼續第 '+(cur.li+1)+' 關（線索 '+(Math.min(cur.qi,cur.qs.length-1)+1)+'）':(prog.unlocked>0?'從第 '+(prog.unlocked+1)+' 關開始':'開始探險');
+}
+$('startBtn').addEventListener('click',function(){
+  tone(600,.08);
+  var cur=load('cur',null);
+  if(cur&&cur.qs&&cur.qs.length&&cur.qi<cur.qs.length){
+    S=cur;S.tries=0;S.done=false;show('sPlay');layout();renderQ();
+  }else startLevel(Math.min(prog.unlocked,LEVELS.length-1));
+});
+$('resetBtn').addEventListener('click',function(){
+  prog={unlocked:0,best:[0,0,0,0,0],scores:[0,0,0,0,0]};save('prog',prog);del('cur');home();
+});
+
+buildGrid();layout();home();
+})();
+</script>
+</body>
+</html>

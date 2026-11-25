@@ -1,6 +1,29 @@
 {
   "games": [
     {
+      "id": "compass-map-quest",
+      "title": "方位小隊長：藍鯨島尋寶記",
+      "emoji": "🧭",
+      "category": "domain",
+      "sub": "社會",
+      "grade": "3–5 年級",
+      "minutes": 12,
+      "players": "單人",
+      "mechanic": "地圖探索",
+      "date": "2026-11-25",
+      "desc": "在虛構的藍鯨島地圖上尋寶，依線索往指定方位走、判斷地點方位，練習四方位、八方位、比例尺換算、圖例，最後挑戰指北針不朝上的轉向地圖。",
+      "tags": [
+        "地圖",
+        "方位",
+        "八方位",
+        "指北針",
+        "比例尺",
+        "圖例",
+        "社會"
+      ],
+      "path": "games/domain/compass-map-quest/"
+    },
+    {
       "id": "pendulum-lab",
       "title": "擺錘實驗室：公平測試大挑戰",
       "emoji": "⏱️",

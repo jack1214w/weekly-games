@@ -1,6 +1,31 @@
 {
   "games": [
     {
+      "id": "kaohsiung-harbor-pilot",
+      "title": "高雄港引水人：巨輪進港",
+      "emoji": "🚢",
+      "category": "drive",
+      "sub": "航海",
+      "grade": "3–6 年級",
+      "minutes": 12,
+      "players": "單人",
+      "mechanic": "慣性操船模擬＋避碰規則",
+      "date": "2026-11-27",
+      "desc": "化身高雄港引水人，操控慣性超大的貨櫃輪進港：認識台灣 IALA B 區「紅右回港」浮標、避碰的讓路與靠右會船，最後指揮拖船安全靠泊碼頭。",
+      "tags": [
+        "高雄港",
+        "引水人",
+        "航海",
+        "浮標",
+        "IALA B 區",
+        "避碰規則",
+        "慣性",
+        "拖船",
+        "靠泊"
+      ],
+      "path": "games/drive/kaohsiung-harbor-pilot/"
+    },
+    {
       "id": "compass-map-quest",
       "title": "方位小隊長：藍鯨島尋寶記",
       "emoji": "🧭",

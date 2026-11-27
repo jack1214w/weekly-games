@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>高雄港引水人：巨輪進港</title>
+<style>
+:root{--bg:#0b2236;--panel:#123049;--panel2:#1b4262;--ink:#f3f8fc;--mut:#b2c8d8;--acc:#36c98c;--warn:#ffc94a;--bad:#ff6b6b;--red:#e8433f;--grn:#2fb35a;--card:#163a56}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg)}
+body{color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:17px;line-height:1.45;touch-action:manipulation;-webkit-user-select:none;user-select:none;overflow:hidden}
+button{font:inherit;color:inherit;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media (orientation:landscape) and (min-width:640px){#app{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr) clamp(230px,28vw,310px)}}
+#view{position:relative;min-height:0;min-width:0;overflow:hidden}
+#cv{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:0;right:0;top:0;padding:6px;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.row{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.chip{background:rgba(6,20,34,.78);border-radius:10px;padding:4px 9px;font-size:16px;white-space:nowrap}
+.back{pointer-events:auto;color:var(--ink);text-decoration:none;background:rgba(6,20,34,.85);border-radius:10px;padding:8px 11px;min-height:44px;display:inline-flex;align-items:center;font-size:16px}
+#mute{pointer-events:auto;background:rgba(6,20,34,.85);border-radius:10px;min-width:44px;min-height:44px;font-size:20px;margin-left:auto}
+#toast{position:absolute;left:50%;top:104px;transform:translateX(-50%);max-width:92%;background:rgba(6,20,34,.9);border:2px solid var(--warn);border-radius:12px;padding:6px 12px;font-size:17px;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+#panel{background:var(--panel);padding:8px;display:grid;gap:8px;grid-template-columns:1fr 1fr;align-content:start}
+@media (orientation:landscape) and (min-width:640px){#panel{grid-template-columns:1fr;align-content:center;overflow-y:auto}}
+.box{background:var(--panel2);border-radius:12px;padding:7px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.lbl{font-size:16px;color:var(--mut);display:flex;justify-content:space-between;gap:4px}
+.lbl b{color:var(--ink)}
+.btns{display:flex;gap:6px}
+.btns button{flex:1;min-height:48px;border-radius:10px;background:#2a5a80;font-size:17px;font-weight:700}
+.btns button:active,.btns button.on{background:#3d7fb0}
+#rudderBox{grid-column:1/-1}
+#rud{position:relative;height:48px;border-radius:24px;background:linear-gradient(90deg,#7a2e2e,#2a3f55 45%,#2a3f55 55%,#245c3a);touch-action:none}
+#rud::after{content:"";position:absolute;left:50%;top:6px;bottom:6px;width:2px;background:#ffffff66}
+#knob{position:absolute;top:2px;width:44px;height:44px;border-radius:50%;background:#f3f8fc;box-shadow:0 2px 6px #0008;left:calc(50% - 22px);display:flex;align-items:center;justify-content:center;color:#123;font-weight:800;font-size:15px}
+#tugBox{grid-column:1/-1;display:none}
+#tugBox.show{display:flex}
+#telBar{display:flex;gap:2px;height:10px}
+#telBar i{flex:1;border-radius:3px;background:#0d2234}
+#telBar i.on{background:var(--warn)}
+.ov{position:fixed;inset:0;background:rgba(5,16,28,.94);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px;z-index:5}
+.ov.hide{display:none}
+.card{background:var(--card);border-radius:18px;padding:18px;width:min(560px,100%);margin:auto 0;display:flex;flex-direction:column;gap:10px}
+.card h1{font-size:clamp(23px,5vw,30px);line-height:1.25}
+.card h2{font-size:21px}
+.card p,.card li{font-size:17px}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.card li{display:flex;gap:8px;align-items:flex-start}
+.card li span:first-child{font-size:22px;width:30px;flex:none;text-align:center}
+.big{min-height:52px;border-radius:14px;background:var(--acc);color:#05261a;font-size:19px;font-weight:800;padding:0 18px}
+.sec{min-height:48px;border-radius:12px;background:#2a5a80;font-size:17px;padding:0 14px}
+.lv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lv button{min-height:64px;border-radius:12px;background:#2a5a80;font-size:16px;padding:4px}
+.lv button:disabled{opacity:.4}
+.opt{min-height:50px;border-radius:12px;background:#24506f;text-align:left;padding:8px 12px;font-size:17px}
+.opt.ok{background:#1f7a4f}.opt.no{background:#8a3434}
+.note{background:#0f2a3f;border-left:4px solid var(--warn);padding:8px 10px;border-radius:8px;font-size:16px}
+.mut{color:var(--mut);font-size:16px}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td{padding:4px;border-bottom:1px solid #ffffff22}
+td:last-child{text-align:right}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="view">
+  <canvas id="cv"></canvas>
+  <div id="hud">
+   <div class="row"><a class="back" href="../../../">← 遊戲目錄</a><span class="chip" id="hLv">第 1 關</span><span class="chip" id="hSc">⭐ 0</span><button id="mute" aria-label="音效開關">🔇</button></div>
+   <div class="row"><span class="chip" id="hSpd">🚢 0.0 節</span><span class="chip" id="hLim">限速 12 節</span><span class="chip" id="hTask">任務</span></div>
+  </div>
+  <div id="toast"></div>
+  <div class="ov" id="ovStart"><div class="card">
+   <h1>🚢 高雄港引水人：巨輪進港</h1>
+   <p>你是高雄港的引水人，要帶著大型貨櫃輪安全通過航道、遵守會船規則，最後穩穩靠上碼頭！</p>
+   <ul>
+    <li><span>🔴</span><span>台灣屬於 IALA B 區：進港時<b>紅色浮標在右邊</b>、綠色在左邊（紅右回港）。</span></li>
+    <li><span>⏫</span><span>用「加俥／減俥」調整主機，大船很重，<b>速度變化很慢</b>，要提早減速。</span></li>
+    <li><span>☸️</span><span>左右拖曳舵盤轉向，船速越快轉得越靈活；放開後舵會保持在原位。</span></li>
+    <li><span>⚠️</span><span>港內限速 12 節（遊戲設定），迎面來船要靠右通過。</span></li>
+    <li><span>🛟</span><span>第 3 關用拖船把船推向碼頭，速度要很慢才能安全繫纜。</span></li>
+   </ul>
+   <p class="mut">鍵盤：↑↓ 加減俥、←→ 轉舵、空白鍵 舵回正、Q／E 拖船推左／推右</p>
+   <div class="lv" id="lvSel"></div>
+   <button class="big" id="bStart">開始引水任務</button>
+   <p class="mut" id="best"></p>
+  </div></div>
+  <div class="ov hide" id="ovBrief"><div class="card" id="briefCard"></div></div>
+  <div class="ov hide" id="ovEnd"><div class="card" id="endCard"></div></div>
+ </div>
+ <div id="panel">
+  <div class="box"><div class="lbl">主機俥令 <b id="telTxt">停俥</b></div><div id="telBar"></div>
+   <div class="btns"><button id="bDn">▼ 減俥</button><button id="bUp">▲ 加俥</button></div></div>
+  <div class="box"><div class="lbl">航向 <b id="hdgTxt">000°</b></div><div class="lbl">側移 <b id="swTxt">0.0</b></div>
+   <div class="btns"><button id="bMid">舵回正</button></div></div>
+  <div class="box" id="rudderBox"><div class="lbl">左舵 ◀ <b id="rudTxt">舵 0°</b> ▶ 右舵</div><div id="rud"><div id="knob">舵</div></div></div>
+  <div class="box" id="tugBox"><div class="lbl">🛟 拖船（按住推）<b id="tugTxt">待命</b></div>
+   <div class="btns"><button id="bTL">⬅ 推左</button><button id="bTR">推右 ➡</button></div></div>
+ </div>
+</div>
+<script>
+'use strict';
+const KEY='wg-kaohsiung-harbor-pilot-';
+function load(k,d){try{const v=localStorage.getItem(KEY+k);return v===null?d:JSON.parse(v);}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v));}catch(e){}}
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);}
+window.addEventListener('resize',()=>{resize();draw();});
+
+/* ---------- 音效 ---------- */
+let muted=load('muted',true),AC=null;
+function setMute(){$('mute').textContent=muted?'🔇':'🔊';}
+$('mute').onclick=()=>{muted=!muted;save('muted',muted);setMute();if(!muted)beep(660,.12);};
+function beep(f,d,type,vol){if(muted)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(vol||.15,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+const sGood=()=>{beep(784,.12);setTimeout(()=>beep(1046,.15),110);};
+const sBad=()=>beep(150,.35,'sawtooth',.12);
+const sHorn=()=>beep(110,.9,'square',.08);
+
+/* ---------- 關卡資料 ---------- */
+const TEL=[{n:'全速後退',v:-40},{n:'半速後退',v:-26},{n:'微速後退',v:-14},{n:'停俥',v:0},{n:'微速前進',v:20},{n:'半速前進',v:40},{n:'全速前進',v:60}];
+const KN=4; // 遊戲單位/秒 ÷ 4 = 節
+const LEVELS=[
+ {name:'航道浮標',task:'沿浮標進港',entrance:-900,end:-3300,hw:150,land:230,
+  cx:y=>{const t=Math.min(1,Math.max(0,(-y-1300)/900));return 180*(1-Math.cos(Math.PI*t))/2;},
+  quiz:[{q:'從外海進入高雄港時（台灣屬於 IALA B 區），紅色浮標應該在船的哪一邊？',o:['右邊（右舷）','左邊（左舷）','哪一邊都可以'],a:0,e:'台灣、日本、美洲屬於 IALA B 區，口訣「紅右回港」：回到港口時紅色在右邊。歐洲等 A 區剛好相反！'}],
+  tips:['從每一對浮標中間通過，紅色在右、綠色在左。','進入防波堤後港內限速 12 節，半速前進約 10 節。','轉彎前要提早打舵，大船反應很慢。']},
+ {name:'會船規則',task:'讓路與靠右會船',entrance:-2600,end:-3500,hw:150,land:230,
+  cx:y=>{const t=Math.min(1,Math.max(0,(-y-1200)/1000));return -160*(1-Math.cos(Math.PI*t))/2;},
+  cross:-950,oncoming:true,
+  quiz:[{q:'兩艘船在航道上迎面相遇，應該怎麼做？',o:['兩船都向右偏，左舷對左舷通過','大船直直走，小船自己閃開','兩船都向左偏'],a:0,e:'國際海上避碰規則：迎面相遇時，兩船都向右轉，讓彼此從左舷交會。'},
+        {q:'一艘漁船從你的「右邊」橫越過來，誰應該讓路？',o:['你（看到對方在自己右舷的船要讓路）','漁船','誰快誰先走'],a:0,e:'交叉相遇時，對方在你右舷，你就是讓路船：減速或從它的後方通過，不可以搶在它前面。'}],
+  tips:['右前方會有漁船橫越：先減速，等它通過再前進。','迎面來船時，把船開到航道的右半邊。','碰撞會大扣分，寧可慢一點。']},
+ {name:'拖船靠泊',task:'停進碼頭綠框',entrance:400,end:-1900,hw:150,land:230,
+  cx:()=>0,berth:{y:-1450,len:170,quay:262},wind:-2,
+  quiz:[{q:'一艘 300 公尺長的貨櫃輪，從半速前進到完全停下來，會怎樣？',o:['要滑行很長一段距離，所以要提早倒俥減速','關掉主機就會馬上停住','只要把舵打滿就能停住'],a:0,e:'大船非常重、慣性很大，停俥後還會滑行很遠。所以引水人會提早減速，再請拖船幫忙把船推靠碼頭。'}],
+  tips:['提早減到微速，接近綠框時用後退俥煞住。','風把船往左吹，按住「推右」讓拖船把船推向碼頭。','速度小於 0.6 節、貼近碼頭並停在綠框內，保持 2 秒就完成繫纜。']}
+];
+
+/* ---------- 狀態 ---------- */
+let unlocked=load('unlocked',1),bestScore=load('best',0);
+let cur=0,results=[],G=null,running=false,last=0;
+const ship={x:0,y:0,h:0,v:0,u:0,r:0,tel:3,rud:0};
+const KEYS={};
+
+function newLevel(i){
+ const L=LEVELS[i];cur=i;
+ Object.assign(ship,{x:0,y:0,h:0,v:24,u:0,r:0,tel:4,rud:0});
+ if(i===2)ship.v=20;
+ G={L,score:0,time:0,gates:[],buoys:[],hitCD:0,speedT:0,events:[],msgs:{},tug:0,berthT:0,done:false,
+    stats:{gateOk:0,gateBad:0,hits:0,speed:0,quiz:0,rule:0},others:[]};
+ for(let y=-250;y>L.end+100;y-=260){const c=L.cx(y);G.gates.push({y,passed:false});G.buoys.push({x:c-L.hw,y,c:'g',hit:false},{x:c+L.hw,y,c:'r',hit:false});}
+ if(L.berth){G.gates=G.gates.filter(g=>g.y>-900);G.buoys=G.buoys.filter(b=>b.y>-900);}
+ if(L.cross)G.others.push({kind:'fish',x:L.cx(L.cross)+560,y:L.cross,h:-Math.PI/2,v:0,len:34,beam:12,active:false,judged:false});
+ if(L.oncoming)G.others.push({kind:'ship',x:0,y:0,h:Math.PI,v:34,len:120,beam:24,active:false,judged:false,spawned:false});
+ $('tugBox').classList.toggle('show',!!L.berth);
+ updTel();updRud();
+}
+
+/* ---------- UI 控制 ---------- */
+const tb=$('telBar');TEL.forEach(()=>tb.appendChild(document.createElement('i')));
+function updTel(){$('telTxt').textContent=TEL[ship.tel].n;[...tb.children].forEach((e,i)=>e.classList.toggle('on',ship.tel>=3?(i>=3&&i<=ship.tel):(i<=3&&i>=ship.tel)));}
+function telStep(d){const n=Math.max(0,Math.min(6,ship.tel+d));if(n!==ship.tel){ship.tel=n;updTel();beep(500+n*60,.06,'square',.06);}}
+$('bUp').onclick=()=>telStep(1);$('bDn').onclick=()=>telStep(-1);
+$('bMid').onclick=()=>{ship.rud=0;updRud();};
+const rud=$('rud'),knob=$('knob');let rDrag=false;
+function updRud(){const w=rud.clientWidth-44;knob.style.left=(w/2+ship.rud/35*w/2)+'px';$('rudTxt').textContent=ship.rud===0?'舵 0°':(ship.rud<0?'左 ':'右 ')+Math.abs(Math.round(ship.rud))+'°';}
+function rudAt(e){const r=rud.getBoundingClientRect();let t=(e.clientX-r.left-22)/(r.width-44)*2-1;t=Math.max(-1,Math.min(1,t));if(Math.abs(t)<.07)t=0;ship.rud=Math.round(t*35);updRud();}
+rud.addEventListener('pointerdown',e=>{rDrag=true;try{rud.setPointerCapture(e.pointerId);}catch(_){}rudAt(e);});
+rud.addEventListener('pointermove',e=>{if(rDrag)rudAt(e);});
+['pointerup','pointercancel'].forEach(t=>rud.addEventListener(t,()=>rDrag=false));
+function holdBtn(el,on,off){el.addEventListener('pointerdown',e=>{e.preventDefault();on();el.classList.add('on');});['pointerup','pointerleave','pointercancel'].forEach(t=>el.addEventListener(t,()=>{off();el.classList.remove('on');}));}
+let tugL=false,tugR=false;
+holdBtn($('bTL'),()=>tugL=true,()=>tugL=false);holdBtn($('bTR'),()=>tugR=true,()=>tugR=false);
+window.addEventListener('keydown',e=>{if(!running)return;KEYS[e.key]=true;
+ if(e.key==='ArrowUp'||e.key==='w'){telStep(1);e.preventDefault();}
+ if(e.key==='ArrowDown'||e.key==='s'){telStep(-1);e.preventDefault();}
+ if(e.key===' '){ship.rud=0;updRud();e.preventDefault();}});
+window.addEventListener('keyup',e=>{KEYS[e.key]=false;});
+
+let toastT=0;
+function toast(t,c){const el=$('toast');el.textContent=t;el.style.borderColor=c||'var(--warn)';el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+function addScore(n,t,good){G.score+=n;if(t)toast((n>0?'+':'')+n+'　'+t,good?'var(--acc)':'var(--bad)');if(good)sGood();else if(n<0)sBad();}
+
+/* ---------- 物理 ---------- */
+function hullPts(o){const s=Math.sin(o.h),c=Math.cos(o.h),pts=[];const n=5;for(let i=0;i<n;i++){const d=(i/(n-1)-.5)*(o.len-o.beam);pts.push({x:o.x+s*d,y:o.y-c*d});}return pts;}
+function collide(a,b){const pa=hullPts(a),pb=hullPts(b),r=(a.beam+b.beam)/2;for(const p of pa)for(const q of pb)if(Math.hypot(p.x-q.x,p.y-q.y)<r)return true;return false;}
+const SHIP={len:120,beam:24};
+function step(dt){
+ const L=G.L;G.time+=dt;if(G.hitCD>0)G.hitCD-=dt;
+ if(KEYS.ArrowLeft||KEYS.a){ship.rud=Math.max(-35,ship.rud-60*dt);updRud();}
+ if(KEYS.ArrowRight||KEYS.d){ship.rud=Math.min(35,ship.rud+60*dt);updRud();}
+ const target=TEL[ship.tel].v;
+ ship.v+=(target-ship.v)*(target<ship.v?.07:.1)*dt+Math.sign(target-ship.v)*Math.min(Math.abs(target-ship.v),.4)*dt;
+ const want=ship.rud/35*.42*Math.max(-.6,Math.min(1.3,ship.v/40));
+ ship.r+=(want-ship.r)*.9*dt;ship.h+=ship.r*dt;
+ // 側向：拖船、風、阻尼
+ let tug=0;if(L.berth){if(tugL||KEYS.q)tug-=6;if(tugR||KEYS.e)tug+=6;}
+ G.tug=tug;
+ const wind=L.wind?L.wind+Math.sin(G.time*.7)*1.5:0;
+ ship.u+=(tug+wind-ship.u*.9)*dt;
+ const s=Math.sin(ship.h),c=Math.cos(ship.h);
+ ship.x+=(s*ship.v+c*ship.u)*dt;ship.y+=(-c*ship.v+s*ship.u)*dt;
+ const sh=Object.assign({},SHIP,ship);
+ // 陸地碰撞
+ if(G.hitCD<=0){for(const p of hullPts(sh)){let hit=false;
+   if(L.berth){if(p.y>-900?Math.abs(p.x)>L.land:p.x<-L.land)hit=true;if(p.y<L.end+60)hit=true;}
+   else if(p.y<L.entrance+60&&Math.abs(p.x-L.cx(p.y))>L.land)hit=true;
+   if(hit){G.hitCD=1.5;G.stats.hits++;addScore(-80,'撞到岸邊／防波堤！');ship.v*=-.2;ship.u=0;const dx=L.cx(ship.y)-ship.x;ship.x+=Math.sign(dx)*8;if(p.y<L.end+60)ship.y+=12;break;}}}
+ // 浮標
+ for(const b of G.buoys){if(b.hit)continue;for(const p of hullPts(sh))if(Math.hypot(p.x-b.x,p.y-b.y)<SHIP.beam/2+7){b.hit=true;G.stats.hits++;addScore(-30,'擦撞浮標！');break;}}
+ // 浮標門
+ for(const g of G.gates){if(g.passed||ship.y>g.y)continue;g.passed=true;const c0=L.cx(g.y);
+   if(ship.x>c0-L.hw&&ship.x<c0+L.hw){G.stats.gateOk++;addScore(50,'紅右綠左，正確通過',true);}else{G.stats.gateBad++;addScore(-40,'沒有從浮標中間通過');}}
+ // 限速
+ const kn=ship.v/KN,inPort=ship.y<L.entrance;
+ if(inPort&&kn>12.05){G.speedT+=dt;if(G.speedT>1){G.speedT=0;G.score-=5;G.stats.speed++;toast('-5　港內超速！請減俥','var(--bad)');beep(300,.1,'square',.06);}}else G.speedT=0;
+ // 其他船隻
+ for(const o of G.others)stepOther(o,dt,sh);
+ // 靠泊
+ if(L.berth)berthCheck(dt);
+ else if(ship.y<L.end&&!G.done){G.done=true;finishLevel(true);}
+}
+function stepOther(o,dt,sh){
+ const L=G.L;
+ if(o.kind==='fish'){
+  if(!o.active&&ship.y<L.cross+800){o.active=true;o.v=30;sHorn();toast('⚠️ 右前方漁船橫越！你是讓路船');}
+  if(o.active){o.x-=o.v*dt;
+   if(!o.judged&&ship.y<o.y){o.judged=true;if(o.x<ship.x-50){G.stats.rule++;addScore(150,'讓路正確！從漁船後方通過',true);}else addScore(-100,'搶在漁船前面，太危險了');}
+   if(collide(sh,o)&&G.hitCD<=0){G.hitCD=1.5;G.stats.hits++;addScore(-200,'和漁船碰撞！');ship.v*=-.2;}}
+ }else{
+  if(!o.spawned&&ship.y<-1100){o.spawned=true;o.active=true;o.y=ship.y-1500;o.x=L.cx(o.y)-75;sHorn();toast('⚠️ 前方有貨輪出港，準備靠右會船');}
+  if(o.active){o.y+=o.v*dt;o.x=L.cx(o.y)-75;o.h=Math.PI;
+   if(!o.judged&&o.y>ship.y){o.judged=true;if(ship.x>L.cx(ship.y)+15){G.stats.rule++;addScore(150,'靠右會船，左舷對左舷！',true);}else addScore(-100,'會船時沒有靠右');}
+   if(collide(sh,o)&&G.hitCD<=0){G.hitCD=1.5;G.stats.hits++;addScore(-200,'和貨輪碰撞！');ship.v*=-.3;}
+   if(o.y>ship.y+1500)o.active=false;}
+ }
+}
+function berthCheck(dt){
+ const B=G.L.berth,right=ship.x+SHIP.beam/2,gap=B.quay-right;
+ if(right>B.quay&&ship.y<-900){ // 碰到碼頭
+  if(ship.u>6&&G.hitCD<=0){G.hitCD=1.5;G.stats.hits++;addScore(-100,'撞擊碼頭太大力！');}
+  ship.x=B.quay-SHIP.beam/2;ship.u=Math.min(0,-ship.u*.2);}
+ const inBox=Math.abs(ship.y-B.y)<(B.len-SHIP.len)/2+4,slow=Math.abs(ship.v)<2.4,close=gap<16,straight=Math.abs(ship.h)<.1,still=Math.abs(ship.u)<3;
+ G.berthOk={inBox,slow,close,straight};
+ if(inBox&&slow&&close&&straight&&still){G.berthT+=dt;if(G.berthT>=2&&!G.done){G.done=true;finishLevel(true);}}else G.berthT=0;
+ if(G.time>240&&!G.done){G.done=true;finishLevel(false);}
+}
+
+/* ---------- 繪圖 ---------- */
+function draw(){
+ if(!W)return;ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.fillStyle='#1d5f8a';ctx.fillRect(0,0,W,H);
+ if(!G)return;const L=G.L;
+ const sc=Math.min(W/560,H/620,1.6),camX=ship.x,camY=ship.y-H*.18/sc;
+ const X=x=>(x-camX)*sc+W/2,Y=y=>(y-camY)*sc+H/2;
+ const top=camY-H/2/sc-50,bot=camY+H/2/sc+50;
+ // 外海深色
+ {const ey=Math.max(0,Y(L.entrance));ctx.fillStyle='#174f78';ctx.fillRect(0,ey,W,Math.max(0,H-ey));}
+ // 陸地
+ ctx.fillStyle='#c9b98a';
+ const yS=Math.min(bot,L.entrance+60),yE=Math.max(top,L.end-400);
+ if(yS>yE){for(const side of[-1,1]){ctx.beginPath();for(let y=yS;y>=yE;y-=20){let lx=L.cx(y)+side*L.land;if(L.berth&&side>0&&y<-900)lx=L.berth.quay;if(y===yS)ctx.moveTo(X(lx),Y(y));else ctx.lineTo(X(lx),Y(y));}
+   ctx.lineTo(side>0?W+10:-10,Y(yE));ctx.lineTo(side>0?W+10:-10,Y(yS));ctx.closePath();ctx.fill();}}
+ // 防波堤頭
+ if(L.entrance<bot&&L.entrance>top&&!L.berth){ctx.fillStyle='#8f8a80';for(const side of[-1,1]){const lx=L.cx(L.entrance)+side*L.land;ctx.fillRect(Math.min(X(lx),side>0?W+10:-10),Y(L.entrance+60),Math.abs((side>0?W+10:-10)-X(lx)),40*sc);}
+  ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.fillText('第二港口 防波堤',X(L.cx(L.entrance)),Y(L.entrance+90));}
+ // 地名
+ ctx.fillStyle='#5a4a2a';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+ if(L.entrance+60<bot){const ly=Math.max(top+80,Math.min(bot-80,ship.y-200));if(ly<L.entrance){ctx.fillText('旗津',X(L.cx(ly)-L.land-90),Y(ly));ctx.fillText(L.berth?'貨櫃中心':'小港',X(L.cx(ly)+L.land+90),Y(ly));}}
+ // 碼頭
+ if(L.berth){const B=L.berth;ctx.fillStyle='#7b7f86';ctx.fillRect(X(B.quay),Y(-1800),14*sc,(900)*sc);
+  ctx.strokeStyle=G.berthT>0?'#ffe14a':'#4dff8f';ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.strokeRect(X(B.quay-SHIP.beam-6),Y(B.y-B.len/2),(SHIP.beam+6)*sc,B.len*sc);ctx.setLineDash([]);
+  ctx.fillStyle='#fff';ctx.fillStyle='#123';ctx.fillText('7 號碼頭',X(B.quay+100),Y(B.y));
+  for(let y=-1100;y>-1800;y-=90){ctx.fillStyle='#e04b3a';ctx.fillRect(X(B.quay+20),Y(y),26*sc,14*sc);ctx.fillStyle='#3a7fe0';ctx.fillRect(X(B.quay+20),Y(y-30),26*sc,14*sc);}}
+ // 終點線
+ if(!L.berth){ctx.strokeStyle='#ffffffaa';ctx.lineWidth=2;ctx.setLineDash([10,8]);ctx.beginPath();ctx.moveTo(X(L.cx(L.end)-L.land),Y(L.end));ctx.lineTo(X(L.cx(L.end)+L.land),Y(L.end));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fff';ctx.fillText('交船點',X(L.cx(L.end)),Y(L.end-14));}
+ // 浮標
+ for(const b of G.buoys){if(b.y<top||b.y>bot)continue;const x=X(b.x),y=Y(b.y),r=Math.max(7,9*sc);
+  ctx.fillStyle=b.c==='r'?'#e8433f':'#2fb35a';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();
+  if(b.c==='r'){ctx.moveTo(x,y-r*1.3);ctx.lineTo(x+r,y+r*.8);ctx.lineTo(x-r,y+r*.8);ctx.closePath();}else ctx.rect(x-r*.85,y-r,r*1.7,r*1.9);
+  ctx.fill();ctx.stroke();if(b.hit){ctx.fillStyle='#ffde59';ctx.fillText('!',x,y-r-4);}}
+ // 其他船
+ for(const o of G.others)if(o.active)drawShip(o,X,Y,sc,o.kind==='fish'?'#f0f0f0':'#d9573b');
+ drawShip(Object.assign({},SHIP,ship),X,Y,sc,'#2c6fb8',true);
+ // 拖船
+ if(L.berth&&G.tug){const dir=Math.sign(G.tug);ctx.font=Math.round(22*sc+6)+'px sans-serif';ctx.fillText('🛟',X(ship.x-dir*(SHIP.beam/2+18)),Y(ship.y)+8);}
+ // 靠泊條件
+ if(L.berth&&G.berthOk){const o=G.berthOk;ctx.textAlign='left';ctx.font='16px sans-serif';const lines=[['綠框內',o.inBox],['貼近碼頭',o.close],['船速夠慢',o.slow],['船身擺正',o.straight]];
+  ctx.fillStyle='rgba(6,20,34,.75)';ctx.fillRect(6,H-104,128,98);lines.forEach((l,i)=>{ctx.fillStyle=l[1]?'#4dff8f':'#ffb0b0';ctx.fillText((l[1]?'✅ ':'⬜ ')+l[0],12,H-82+i*22);});
+  if(G.berthT>0){ctx.fillStyle='#ffe14a';ctx.textAlign='center';ctx.font='bold 20px sans-serif';ctx.fillText('繫纜中… '+Math.ceil(2-G.berthT),W/2,H*.62);}}
+ // 浮標方位提示
+ ctx.textAlign='left';
+}
+function drawShip(o,X,Y,sc,col,me){ctx.save();ctx.translate(X(o.x),Y(o.y));ctx.rotate(o.h);const l=o.len*sc,b=o.beam*sc;
+ ctx.fillStyle=col;ctx.strokeStyle='#0b1a2a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-l/2);ctx.quadraticCurveTo(b/2,-l/2+b*.6,b/2,-l/2+b*1.2);ctx.lineTo(b/2,l/2);ctx.lineTo(-b/2,l/2);ctx.lineTo(-b/2,-l/2+b*1.2);ctx.quadraticCurveTo(-b/2,-l/2+b*.6,0,-l/2);ctx.fill();ctx.stroke();
+ if(o.len>60){const cs=['#e04b3a','#f2c230','#3a7fe0','#38b26b'];for(let i=0;i<6;i++){ctx.fillStyle=cs[(i+(me?0:2))%4];ctx.fillRect(-b*.38,-l/2+b*1.4+i*(l*.11),b*.76,l*.09);}ctx.fillStyle='#fff';ctx.fillRect(-b*.4,l/2-l*.14,b*.8,l*.1);}
+ else{ctx.fillStyle='#3a7fe0';ctx.fillRect(-b*.3,-b*.2,b*.6,b*.6);}
+ if(me){ctx.strokeStyle='#ffe14a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-l/2-4);ctx.lineTo(0,-l/2-4-Math.max(20,ship.v*sc*1.5));ctx.stroke();}
+ ctx.restore();}
+
+function hud(){const kn=ship.v/KN;$('hLv').textContent='第 '+(cur+1)+' 關　'+G.L.name;$('hSc').textContent='⭐ '+G.score;
+ const over=ship.y<G.L.entrance&&kn>12.05;$('hSpd').textContent='🚢 '+(kn<0?'後退 ':'')+Math.abs(kn).toFixed(1)+' 節';$('hSpd').style.color=over?'#ff8a8a':'';
+ $('hLim').textContent=ship.y<G.L.entrance?'港內限速 12 節':'外海航道';
+ let task=G.L.task;if(!G.L.berth)task+='　剩 '+Math.max(0,Math.round((ship.y-G.L.end)/10))+' 公尺';else task+='　'+Math.floor(G.time)+' 秒';$('hTask').textContent=task;
+ let deg=Math.round(((ship.h*180/Math.PI)%360+360)%360);$('hdgTxt').textContent=String(deg).padStart(3,'0')+'°';
+ $('swTxt').textContent=(ship.u>0.3?'向右 ':ship.u<-0.3?'向左 ':'')+Math.abs(ship.u).toFixed(1);
+ $('tugTxt').textContent=G.tug>0?'推右中':G.tug<0?'推左中':'待命';}
+
+function loop(t){if(!running)return;const dt=Math.min(.05,(t-last)/1000||0);last=t;step(dt);if(running){draw();hud();}requestAnimationFrame(loop);}
+
+/* ---------- 流程 ---------- */
+function showLvSel(){const box=$('lvSel');box.innerHTML='';LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.innerHTML=(i<unlocked?'':'🔒 ')+'第 '+(i+1)+' 關<br>'+L.name;b.disabled=i>=unlocked;b.onclick=()=>{results=[];brief(i);};box.appendChild(b);});
+ $('best').textContent=bestScore?'最佳總分：'+bestScore+' 分':'第一次玩請從第 1 關開始。';}
+function brief(i){newLevel(i);$('ovStart').classList.add('hide');$('ovEnd').classList.add('hide');const L=LEVELS[i];let qi=0;
+ const card=$('briefCard');
+ function showQ(){const q=L.quiz[qi];card.innerHTML='<h2>第 '+(i+1)+' 關：'+L.name+'</h2><p class="mut">出發前的引水人小測驗（'+(qi+1)+'/'+L.quiz.length+'）</p><p><b>'+q.q+'</b></p>';
+  q.o.forEach((t,k)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>answer(k,b);card.appendChild(b);});}
+ function answer(k,btn){const q=L.quiz[qi];const bs=card.querySelectorAll('.opt');bs.forEach(b=>b.disabled=true);bs[q.a].classList.add('ok');
+  if(k===q.a){G.score+=50;G.stats.quiz++;sGood();}else{btn.classList.add('no');sBad();}
+  const n=document.createElement('div');n.className='note';n.innerHTML=(k===q.a?'✅ 答對了！+50　':'❌ 再想想：')+q.e;card.appendChild(n);
+  const nx=document.createElement('button');nx.className='big';nx.textContent='下一步';nx.onclick=()=>{qi++;if(qi<L.quiz.length)showQ();else showTips();};card.appendChild(nx);}
+ function showTips(){card.innerHTML='<h2>第 '+(i+1)+' 關：'+L.name+'</h2><ul>'+L.tips.map((t,k)=>'<li><span>'+['🧭','⚓','💡'][k]+'</span><span>'+t+'</span></li>').join('')+'</ul>';
+  const b=document.createElement('button');b.className='big';b.textContent='出港！開始操船';b.onclick=go;card.appendChild(b);}
+ showQ();$('ovBrief').classList.remove('hide');}
+function go(){$('ovBrief').classList.add('hide');running=true;last=performance.now();resize();sHorn();requestAnimationFrame(loop);}
+function finishLevel(ok){running=false;const L=G.L;let bonus=0;
+ if(ok){if(L.berth){bonus=Math.max(100,400-Math.round(G.time));}else bonus=150;G.score+=bonus;}
+ results[cur]={name:L.name,score:G.score,ok,stats:G.stats,time:Math.round(G.time)};
+ if(ok&&cur+1>=unlocked&&cur+1<LEVELS.length){unlocked=cur+2;save('unlocked',unlocked);}
+ const s=G.stats,card=$('endCard');ok?sGood():sBad();
+ let html='<h2>'+(ok?'✅ 第 '+(cur+1)+' 關完成！':'⏰ 時間到，這次沒能完成繫纜')+'</h2><table>';
+ html+='<tr><td>測驗答對</td><td>'+s.quiz+' 題</td></tr>';
+ if(!L.berth)html+='<tr><td>正確通過浮標門</td><td>'+s.gateOk+' / '+G.gates.length+'</td></tr>';
+ if(L.cross||L.oncoming)html+='<tr><td>避碰規則做對</td><td>'+s.rule+' / 2</td></tr>';
+ html+='<tr><td>碰撞次數</td><td>'+s.hits+'</td></tr><tr><td>超速警告</td><td>'+s.speed+'</td></tr>';
+ html+='<tr><td>完成獎勵</td><td>'+bonus+'</td></tr><tr><td><b>本關得分</b></td><td><b>'+G.score+'</b></td></tr></table>';
+ html+='<div class="note">'+feedback(s,L,ok)+'</div>';
+ card.innerHTML=html;
+ const row=document.createElement('div');row.className='btns';
+ const again=document.createElement('button');again.className='sec';again.textContent='↻ 重玩本關';again.onclick=()=>brief(cur);row.appendChild(again);
+ const nx=document.createElement('button');nx.className='big';
+ if(cur+1<LEVELS.length&&ok){nx.textContent='下一關 ▶';nx.onclick=()=>brief(cur+1);}else{nx.textContent='看總成績';nx.onclick=summary;}
+ row.appendChild(nx);card.appendChild(row);$('ovEnd').classList.remove('hide');}
+function feedback(s,L,ok){
+ if(!ok)return '大船很難馬上停下來：先減到微速，靠近綠框前就用後退俥，再用拖船慢慢推向碼頭。';
+ if(s.hits>2)return '碰撞有點多！記得大船轉彎和減速都要「提早」，看到彎道就先打舵。';
+ if(s.speed>3)return '港內超速太多次。引水人會控制船速，讓船有足夠時間反應。';
+ if(L.berth)return '漂亮的靠泊！真正的引水人也是靠倒俥、拖船和耐心，把巨輪貼上碼頭。';
+ if(L.cross)return '你遵守了避碰規則：交叉時看到對方在右舷就讓路，迎面時靠右會船。';
+ return '你已經熟悉「紅右回港」了！台灣屬於 IALA B 區，出國搭船時可以留意浮標顏色是否相反。';}
+function summary(){const total=results.reduce((a,r)=>a+(r?r.score:0),0),played=results.filter(Boolean).length;
+ const full=played===LEVELS.length;if(full&&total>bestScore){bestScore=total;save('best',bestScore);}
+ const stars=total>=1700?3:total>=1100?2:total>=500?1:0;
+ const card=$('endCard');card.innerHTML='<h2>🏁 引水任務總成績</h2><p style="font-size:30px;text-align:center">'+'⭐'.repeat(stars)+'☆'.repeat(3-stars)+'</p><table>'+
+  results.map((r,i)=>r?'<tr><td>第 '+(i+1)+' 關 '+r.name+(r.ok?'':'（未完成）')+'</td><td>'+r.score+'</td></tr>':'').join('')+
+  '<tr><td><b>總分</b></td><td><b>'+total+'</b></td></tr></table><p class="mut">'+(full?'最佳總分：'+bestScore:'從第 1 關連續玩完三關，才會記錄最佳總分。')+'</p>'+
+  '<div class="note">想一想：為什麼大型船隻進港要請「引水人」上船？如果你是船長，第一次來到高雄港最擔心什麼？</div>';
+ const b=document.createElement('button');b.className='big';b.textContent='再玩一次';b.onclick=()=>{results=[];$('ovEnd').classList.add('hide');showLvSel();$('ovStart').classList.remove('hide');};card.appendChild(b);}
+$('bStart').onclick=()=>{results=[];brief(0);};
+
+setMute();resize();showLvSel();newLevel(0);draw();hud();
+</script>
+</body>
+</html>
